@@ -48,6 +48,7 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 // Verificar erros
 if (curl_errno($ch)) {
     http_response_code(500);
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => 'Erro na comunicação com a API: ' . curl_error($ch)
@@ -58,11 +59,33 @@ if (curl_errno($ch)) {
 // Fechar cURL
 curl_close($ch);
 
-// Definir código de status HTTP
+// Garantir que a resposta da API seja um JSON válido
+if ($response === false || $response === '') {
+    http_response_code($httpCode ?: 502);
+    header('Content-Type: application/json');
+
+    echo json_encode([
+        'success' => false,
+        'error' => 'A API externa retornou uma resposta vazia.'
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+$decodedResponse = json_decode($response, true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(502);
+    header('Content-Type: application/json');
+
+    echo json_encode([
+        'success' => false,
+        'error' => 'A resposta da API externa não está em um formato JSON válido.',
+        'details' => substr($response ?? '', 0, 200)
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+}
+
+// Definir código de status HTTP e retornar o JSON validado
 http_response_code($httpCode);
-
-// Definir cabeçalho de tipo de conteúdo
 header('Content-Type: application/json');
-
-// Retornar a resposta
-echo $response;
+echo json_encode($decodedResponse, JSON_UNESCAPED_UNICODE);
