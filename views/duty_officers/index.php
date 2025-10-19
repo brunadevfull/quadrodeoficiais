@@ -1,3 +1,8 @@
+<?php
+$officerOptions = $officerOptions ?? [];
+$masterOptions = $masterOptions ?? [];
+$personnelErrors = $personnelErrors ?? [];
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -174,6 +179,14 @@
     <div class="container">
         <div class="duty-officers-container">
             <h2>Definir Oficiais de Serviço</h2>
+
+            <?php if (!empty($personnelErrors)): ?>
+                <div class="error-message">
+                    <?php foreach ($personnelErrors as $error): ?>
+                        <p><?php echo htmlspecialchars($error); ?></p>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
             
             <div id="currentOfficers" class="current-officers">
                 <h3>Oficiais de Serviço Atuais</h3>
@@ -195,26 +208,42 @@
                     <label for="officerSelect">Oficial de Serviço:</label>
                     <select id="officerSelect" name="officerName">
                         <option value="">Selecione um Oficial</option>
-                        <?php foreach ($oficiais as $oficial): ?>
-                            <?php if (strpos(strtoupper($oficial['posto_id']), 'T') !== false): ?>
-                                <option value="<?php echo htmlspecialchars($oficial['nome']); ?>">
-                                    <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
-                                </option>
-                            <?php endif; ?>
+                        <?php foreach ($officerOptions as $option): ?>
+                            <?php
+                                $optionRank = $option['rank'] ?? '';
+                                $optionName = $option['name'] ?? $option['value'] ?? '';
+                                $optionType = $option['type'] ?? 'officer';
+                                $optionValue = $option['value'] ?? $optionName;
+                            ?>
+                            <option
+                                value="<?php echo htmlspecialchars($optionValue); ?>"
+                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                            >
+                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="masterSelect">Contramestre:</label>
                     <select id="masterSelect" name="masterName">
                         <option value="">Selecione um Contramestre</option>
-                        <?php foreach ($oficiais as $oficial): ?>
-                            <?php if (strpos(strtoupper($oficial['posto_id']), 'SG') !== false): ?>
-                                <option value="<?php echo htmlspecialchars($oficial['nome']); ?>">
-                                    <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
-                                </option>
-                            <?php endif; ?>
+                        <?php foreach ($masterOptions as $option): ?>
+                            <?php
+                                $optionRank = $option['rank'] ?? '';
+                                $optionName = $option['name'] ?? $option['value'] ?? '';
+                                $optionType = $option['type'] ?? 'master';
+                                $optionValue = $option['value'] ?? $optionName;
+                            ?>
+                            <option
+                                value="<?php echo htmlspecialchars($optionValue); ?>"
+                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                            >
+                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                            </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
