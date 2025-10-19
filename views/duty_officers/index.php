@@ -289,23 +289,15 @@ $personnelErrors = $personnelErrors ?? [];
             document.getElementById('officersDisplay').classList.add('hidden');
             document.getElementById('errorLoadingOfficers').classList.add('hidden');
             
-            // Obter o cookie de sessão para autenticação
-            const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                const [key, value] = cookie.trim().split('=');
-                acc[key] = value;
-                return acc;
-            }, {});
-            
-            // URL da API do Node.js
-            const apiUrl = '/api/duty-officers';
-            
+            // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
+            const apiUrl = 'proxy-duty-officers.php';
+
             fetch(apiUrl, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': document.cookie // Enviar o cookie da sessão PHP
+                    'Content-Type': 'application/json'
                 },
-                credentials: 'include' // Importante para enviar cookies
+                credentials: 'same-origin'
             })
             .then(response => {
                 if (!response.ok) {
@@ -393,17 +385,16 @@ $personnelErrors = $personnelErrors ?? [];
                 masterName: masterSelect.value === "" ? null : masterName
             };
             
-            // URL da API do Node.js
-            const apiUrl = '/api/duty-officers';
-            
+            // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
+            const apiUrl = 'proxy-duty-officers.php';
+
             // Enviar requisição para a API
             fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Cookie': document.cookie // Enviar o cookie da sessão PHP
+                    'Content-Type': 'application/json'
                 },
-                credentials: 'include', // Importante para enviar cookies
+                credentials: 'same-origin',
                 body: JSON.stringify(officerData)
             })
             .then(response => {
