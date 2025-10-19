@@ -21,21 +21,15 @@ try {
     echo "Erro ao recuperar postos: " . $e->getMessage();
 }
 
-// Consulta SQL para buscar os dados dos oficiais com seus postos e imagens
-$stmt = $pdo->query('
-    SELECT o.id, o.nome, p.descricao, p.imagem, o.status, o.localizacao, o.posto_id 
-    FROM oficiais o
-    JOIN postos p ON o.posto_id = p.id
-    ORDER BY o.localizacao
-');
-$oficiais = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 try {
   $stmt = $pdo->query('SELECT id, username FROM users');
   $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
   echo "Erro ao recuperar usuÃ¡rios: " . $e->getMessage();
 }
+
+$officerOptions = $officerOptions ?? [];
+$masterOptions = $masterOptions ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -186,38 +180,66 @@ try {
                             <label for="officerSelect">Oficial de Serviço:</label>
                             <select class="form-control" id="officerSelect" name="officerName">
                                 <option value="">Selecione um Oficial</option>
-                                <?php foreach ($oficiais as $oficial): ?>
-                                    <?php 
-                                        // Verificar se é um oficial (Tenente, Capitão, etc.)
-                                        $posto = strtoupper($oficial['descricao'] ?? '');
-                                        if (strpos($posto, 'TENENTE') !== false || 
-                                            strpos($posto, 'CAPITÃO') !== false ||
-                                            strpos($posto, 'CORONEL') !== false || 
-                                            strpos($posto, 'MAJOR') !== false): 
-                                    ?>
-                                        <option value="<?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>">
-                                            <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
+                                <?php if (!empty($officerOptions)): ?>
+                                    <?php foreach ($officerOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? '';
+                                            $optionName = $option['name'] ?? '';
+                                            $optionRank = $option['rank'] ?? '';
+                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+
+                                            if ($displayLabel === '') {
+                                                $displayLabel = $optionValue;
+                                            }
+
+                                            if ($optionValue === '') {
+                                                $optionValue = $displayLabel;
+                                            }
+
+                                            if ($optionValue === '' || $displayLabel === '') {
+                                                continue;
+                                            }
+                                        ?>
+                                        <option value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="" disabled>Nenhum oficial disponível</option>
+                                <?php endif; ?>
                             </select>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="masterSelect">Contramestre:</label>
                             <select class="form-control" id="masterSelect" name="masterName">
                                 <option value="">Selecione um Contramestre</option>
-                                <?php foreach ($oficiais as $oficial): ?>
-                                    <?php 
-                                        // Verificar se é um sargento
-                                        $posto = strtoupper($oficial['descricao'] ?? '');
-                                        if (strpos($posto, 'SARGENTO') !== false || 
-                                            strpos($posto, 'SUBOFICIAL') !== false): 
-                                    ?>
-                                        <option value="<?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>">
-                                            <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
+                                <?php if (!empty($masterOptions)): ?>
+                                    <?php foreach ($masterOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? '';
+                                            $optionName = $option['name'] ?? '';
+                                            $optionRank = $option['rank'] ?? '';
+                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+
+                                            if ($displayLabel === '') {
+                                                $displayLabel = $optionValue;
+                                            }
+
+                                            if ($optionValue === '') {
+                                                $optionValue = $displayLabel;
+                                            }
+
+                                            if ($optionValue === '' || $displayLabel === '') {
+                                                continue;
+                                            }
+                                        ?>
+                                        <option value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <option value="" disabled>Nenhum contramestre disponível</option>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
