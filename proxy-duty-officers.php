@@ -2,7 +2,7 @@
 // Cabeçalhos para permitir CORS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 // Se for uma requisição OPTIONS, apenas retornar com os cabeçalhos CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -12,8 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Configurações
 $apiHost = '10.1.129.46:5001';
-$endpoint = '/api/duty-officers';
+$endpoint = '/api/military-personnel';
 $url = "http://$apiHost$endpoint";
+
+// Encaminhar parâmetros de consulta, se houver
+if (!empty($_SERVER['QUERY_STRING'])) {
+    $url .= '?' . $_SERVER['QUERY_STRING'];
+}
 
 // Obter conteúdo da requisição
 $requestBody = file_get_contents('php://input');
@@ -27,10 +32,14 @@ curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 
+$headers = ['Accept: application/json'];
+
 if ($method === 'PUT' || $method === 'POST') {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    $headers[] = 'Content-Type: application/json';
 }
+
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
 // Executar requisição
 $response = curl_exec($ch);
@@ -57,4 +66,3 @@ header('Content-Type: application/json');
 
 // Retornar a resposta
 echo $response;
-?>
