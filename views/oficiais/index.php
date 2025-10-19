@@ -1,4 +1,6 @@
 <?php
+$headerData = compact('officerOptions', 'masterOptions');
+extract($headerData);
 include 'views/partials/header.php';
 include_once 'sunset_system_db.php';
 SunsetSystemDB::init($pdo);
