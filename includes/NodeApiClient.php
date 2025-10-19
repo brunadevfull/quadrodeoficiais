@@ -30,7 +30,7 @@ class NodeApiClient
      */
     public function getPersonnelOptions(string $type): array
     {
-        $payload = $this->request('GET', '/api/military-personnel', ['type' => $type]);
+        $payload = $this->request('GET', '/api/military_personnel', ['type' => $type]);
 
         if (!is_array($payload)) {
             throw new RuntimeException('Resposta inesperada da API de militares.');
