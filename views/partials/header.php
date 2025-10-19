@@ -1,40 +1,51 @@
- <?php include_once $_SERVER['DOCUMENT_ROOT'] . '/includes/sunset_data.php';?> 
+<?php include_once $_SERVER['DOCUMENT_ROOT'] . '/includes/sunset_data.php';?>
 <?php
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-include $_SERVER['DOCUMENT_ROOT'].'/config/config.php';
 
-// Verifique se o usuÃ¡rio estÃ¡ logado
+require_once $_SERVER['DOCUMENT_ROOT'] . '/includes/NodeApiClient.php';
+
+// Verifique se o usuário está logado
 $is_logged_in = isset($_SESSION['user_id']);
 $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 $is_portaria = isset($_SESSION['user_id']) && !$is_admin;
 
-
-
-// Recupere os postos do banco de dados
-try {
-    $stmt = $pdo->prepare('SELECT id, descricao, imagem FROM postos');
-    $stmt->execute();
-    $postos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    echo "Erro ao recuperar postos: " . $e->getMessage();
+$nodeApiConfig = [];
+$configPath = $_SERVER['DOCUMENT_ROOT'] . '/config/node_api.php';
+if (file_exists($configPath)) {
+    $nodeApiConfig = include $configPath;
 }
 
-// Consulta SQL para buscar os dados dos oficiais com seus postos e imagens
-$stmt = $pdo->query('
-    SELECT o.id, o.nome, p.descricao, p.imagem, o.status, o.localizacao, o.posto_id 
-    FROM oficiais o
-    JOIN postos p ON o.posto_id = p.id
-    ORDER BY o.localizacao
-');
-$oficiais = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if (!isset($nodeApiConfig['auth']['token']) && isset($_SESSION['node_api_token'])) {
+    if (!isset($nodeApiConfig['auth']) || !is_array($nodeApiConfig['auth'])) {
+        $nodeApiConfig['auth'] = [];
+    }
+    $nodeApiConfig['auth']['token'] = $_SESSION['node_api_token'];
+}
+
+$nodeClient = new NodeApiClient($nodeApiConfig);
+
+$officerOptions = $_SESSION['cached_officer_options'] ?? [];
+$masterOptions = $_SESSION['cached_master_options'] ?? [];
+$personnelErrors = [];
 
 try {
-  $stmt = $pdo->query('SELECT id, username FROM users');
-  $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-  echo "Erro ao recuperar usuÃ¡rios: " . $e->getMessage();
+    $officerOptions = $nodeClient->getPersonnelOptions('officer');
+    $_SESSION['cached_officer_options'] = $officerOptions;
+} catch (Throwable $exception) {
+    $personnelErrors[] = empty($officerOptions)
+        ? 'Não foi possível carregar a lista de oficiais de serviço. Tente novamente mais tarde.'
+        : 'Não foi possível atualizar a lista de oficiais de serviço. Exibindo dados previamente carregados.';
+}
+
+try {
+    $masterOptions = $nodeClient->getPersonnelOptions('master');
+    $_SESSION['cached_master_options'] = $masterOptions;
+} catch (Throwable $exception) {
+    $personnelErrors[] = empty($masterOptions)
+        ? 'Não foi possível carregar a lista de contramestres. Tente novamente mais tarde.'
+        : 'Não foi possível atualizar a lista de contramestres. Exibindo dados previamente carregados.';
 }
 ?>
 
@@ -156,6 +167,13 @@ try {
                 </button>
             </div>
             <div class="modal-body">
+                <?php if (!empty($personnelErrors)): ?>
+                    <div class="alert alert-warning" role="alert">
+                        <?php foreach ($personnelErrors as $errorMessage): ?>
+                            <p class="mb-0"><?php echo htmlspecialchars($errorMessage); ?></p>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
                 <div id="currentOfficers" class="mb-4">
                     <h6>Oficiais de Serviço Atuais</h6>
                     <div id="loadingCurrentOfficers">
@@ -186,38 +204,56 @@ try {
                             <label for="officerSelect">Oficial de Serviço:</label>
                             <select class="form-control" id="officerSelect" name="officerName">
                                 <option value="">Selecione um Oficial</option>
-                                <?php foreach ($oficiais as $oficial): ?>
-                                    <?php 
-                                        // Verificar se é um oficial (Tenente, Capitão, etc.)
-                                        $posto = strtoupper($oficial['descricao'] ?? '');
-                                        if (strpos($posto, 'TENENTE') !== false || 
-                                            strpos($posto, 'CAPITÃO') !== false ||
-                                            strpos($posto, 'CORONEL') !== false || 
-                                            strpos($posto, 'MAJOR') !== false): 
-                                    ?>
-                                        <option value="<?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>">
-                                            <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
-                                        </option>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
+                                <?php if (empty($officerOptions)): ?>
+                                    <option value="" disabled>Lista de oficiais indisponível</option>
+                                <?php else: ?>
+                                    <?php foreach ($officerOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? ($option['name'] ?? '');
+                                            $optionName = $option['name'] ?? $optionValue;
+                                            $optionRank = $option['rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'officer';
+                                            $displayName = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+                                        ?>
+                                        <?php if (!empty($optionValue)): ?>
+                                            <option
+                                                value="<?php echo htmlspecialchars($optionValue); ?>"
+                                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                            >
+                                                <?php echo htmlspecialchars($displayName ?: $optionValue); ?>
+                                            </option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="masterSelect">Contramestre:</label>
                             <select class="form-control" id="masterSelect" name="masterName">
                                 <option value="">Selecione um Contramestre</option>
-                                <?php foreach ($oficiais as $oficial): ?>
-                                    <?php 
-                                        // Verificar se é um sargento
-                                        $posto = strtoupper($oficial['descricao'] ?? '');
-                                        if (strpos($posto, 'SARGENTO') !== false || 
-                                            strpos($posto, 'SUBOFICIAL') !== false): 
-                                    ?>
-                                        <option value="<?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>">
-                                            <?php echo htmlspecialchars($oficial['descricao'] . ' ' . $oficial['nome']); ?>
-                                        </option>
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
+                                <?php if (empty($masterOptions)): ?>
+                                    <option value="" disabled>Lista de contramestres indisponível</option>
+                                <?php else: ?>
+                                    <?php foreach ($masterOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? ($option['name'] ?? '');
+                                            $optionName = $option['name'] ?? $optionValue;
+                                            $optionRank = $option['rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'master';
+                                            $displayName = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+                                        ?>
+                                        <?php if (!empty($optionValue)): ?>
+                                            <option
+                                                value="<?php echo htmlspecialchars($optionValue); ?>"
+                                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                            >
+                                                <?php echo htmlspecialchars($displayName ?: $optionValue); ?>
+                                            </option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
