@@ -2,7 +2,7 @@
 class OficialController {
     public function index() {
         include 'models/Oficial.php';
-        require_once 'includes/NodeApiClient.php';
+        require_once 'includes/MilitaryPersonnelRepository.php';
 
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -15,30 +15,20 @@ class OficialController {
         // Obtém os oficiais locais
         $oficiais = Oficial::all();
 
-        $nodeApiConfig = [];
-        $configPath = 'config/node_api.php';
-        if (file_exists($configPath)) {
-            $nodeApiConfig = include $configPath;
-        }
-
-        if (!isset($nodeApiConfig['auth']['token']) && isset($_SESSION['node_api_token'])) {
-            $nodeApiConfig['auth']['token'] = $_SESSION['node_api_token'];
-        }
-
-        $nodeClient = new NodeApiClient($nodeApiConfig);
+        $personnelRepository = new MilitaryPersonnelRepository();
 
         $personnelErrors = [];
         $officerOptions = [];
         $masterOptions = [];
 
         try {
-            $officerOptions = $nodeClient->getPersonnelOptions('officer');
+            $officerOptions = $personnelRepository->getPersonnelOptions('officer');
         } catch (Exception $exception) {
             $personnelErrors[] = $exception->getMessage();
         }
 
         try {
-            $masterOptions = $nodeClient->getPersonnelOptions('master');
+            $masterOptions = $personnelRepository->getPersonnelOptions('master');
         } catch (Exception $exception) {
             $personnelErrors[] = $exception->getMessage();
         }
@@ -56,7 +46,7 @@ class OficialController {
             }
 
             if (empty($personnelErrors)) {
-                $personnelErrors[] = 'Nenhum registro retornado pela API. Exibindo dados locais.';
+                $personnelErrors[] = 'Nenhum registro encontrado no banco de militares. Exibindo dados locais.';
             }
         }
 
