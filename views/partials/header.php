@@ -576,23 +576,14 @@ $(document).ready(function() {
     });
 });
 
-function formatDutyDisplay(name, rank) {
+function formatDutyDisplay(name) {
     const normalizedName = typeof name === 'string' ? name.trim() : '';
-    const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
 
-    if (normalizedName === '' && normalizedRank === '') {
+    if (normalizedName === '') {
         return 'Não definido';
     }
 
-    if (normalizedRank === '') {
-        return normalizedName;
-    }
-
-    if (normalizedName === '') {
-        return normalizedRank;
-    }
-
-    return `${normalizedRank} ${normalizedName}`;
+    return normalizedName;
 }
 
 // Função para carregar os oficiais de serviço atuais
@@ -629,8 +620,8 @@ function loadCurrentDutyOfficers() {
             const masterRank = data.officers?.masterRank ?? null;
 
             // Atualizar os dados na interface
-            $('#currentOfficer').text(formatDutyDisplay(officerName, officerRank));
-            $('#currentMaster').text(formatDutyDisplay(masterName, masterRank));
+            $('#currentOfficer').text(formatDutyDisplay(officerName));
+            $('#currentMaster').text(formatDutyDisplay(masterName));
             
             // Formatar data de atualização
             const updatedDate = data.officers?.updatedAt ? new Date(data.officers.updatedAt) : null;

@@ -316,8 +316,8 @@ $personnelErrors = $personnelErrors ?? [];
                     document.getElementById('officersDisplay').classList.remove('hidden');
                     
                     // Atualizar os dados na interface
-                    document.getElementById('currentOfficer').textContent = formatDutyDisplay(data.officers.officerName, data.officers.officerRank);
-                    document.getElementById('currentMaster').textContent = formatDutyDisplay(data.officers.masterName, data.officers.masterRank);
+                    document.getElementById('currentOfficer').textContent = formatDutyDisplay(data.officers.officerName);
+                    document.getElementById('currentMaster').textContent = formatDutyDisplay(data.officers.masterName);
                     
                     // Formatar data de atualização
                     const updatedDate = data.officers.updatedAt ? new Date(data.officers.updatedAt) : null;
@@ -356,16 +356,11 @@ $personnelErrors = $personnelErrors ?? [];
             }
         }
 
-        function formatDutyDisplay(name, rank) {
+        function formatDutyDisplay(name) {
             if (!name || name.trim() === '') {
                 return 'Não definido';
             }
-
-            if (!rank || rank.trim() === '') {
-                return name;
-            }
-
-            return `${rank} ${name}`;
+            return name.trim();
         }
 
         // Função para atualizar os oficiais de serviço
