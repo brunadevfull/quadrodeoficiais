@@ -100,8 +100,10 @@ function handlePut(DutyAssignmentsRepository $repository): void
     $assignment = $repository->createAssignment([
         'officerName' => $payload['officerName'] ?? null,
         'officerRank' => $payload['officerRank'] ?? null,
+        'officerSpecialty' => $payload['officerSpecialty'] ?? null,
         'masterName' => $payload['masterName'] ?? null,
         'masterRank' => $payload['masterRank'] ?? null,
+        'masterSpecialty' => $payload['masterSpecialty'] ?? null,
         'validFrom' => $payload['validFrom'] ?? null,
     ]);
 

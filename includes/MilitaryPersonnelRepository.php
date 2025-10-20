@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/MilitaryFormatter.php';
+
 class MilitaryPersonnelRepository
 {
     private PDO $pdo;
@@ -44,7 +46,7 @@ class MilitaryPersonnelRepository
 
             $normalized = $this->normalizePersonnel($row, $type);
 
-            if ($normalized['name'] === '') {
+            if ($normalized['display'] === '') {
                 continue;
             }
 
@@ -55,18 +57,21 @@ class MilitaryPersonnelRepository
             }
 
             $options[$optionKey] = [
+                'id' => $normalized['id'],
                 'value' => $normalized['name'],
                 'name' => $normalized['name'],
-                'rank' => $normalized['rank'],
+                'rank' => $normalized['rank_display'],
+                'short_rank' => $normalized['rank'],
                 'type' => $normalized['type'],
                 'specialty' => $normalized['specialty'],
+                'display' => $normalized['display'],
             ];
         }
 
         $options = array_values($options);
 
         usort($options, static function (array $left, array $right): int {
-            return strcmp($left['name'], $right['name']);
+            return strcmp($left['display'], $right['display']);
         });
 
         return $options;
@@ -120,21 +125,30 @@ class MilitaryPersonnelRepository
         $name = $row['name'] ?? $row['nome'] ?? $row['fullName'] ?? $row['full_name'] ?? '';
         $rank = $row['rank'] ?? $row['posto'] ?? $row['descricao'] ?? $row['patente'] ?? '';
         $type = $row['type'] ?? $requestedType;
+        $specialty = $row['specialty'] ?? $row['especialidade'] ?? '';
+        $identifier = $row['id'] ?? null;
+
+        $formattedName = MilitaryFormatter::formatName((string)$name);
+        $formattedRank = MilitaryFormatter::formatRank((string)$rank);
+        $formattedSpecialty = MilitaryFormatter::formatSpecialty((string)$specialty);
 
         return [
-            'name' => trim((string)$name),
-            'rank' => trim((string)$rank),
-            'type' => (string)$type,
-            'specialty' => trim((string)($row['specialty'] ?? $row['especialidade'] ?? '')),
+            'id' => $identifier !== null ? (int)$identifier : null,
+            'name' => $formattedName,
+            'rank' => $formattedRank,
+            'rank_display' => MilitaryFormatter::buildRankWithSpecialty($formattedRank, $formattedSpecialty),
+            'type' => trim((string)$type),
+            'specialty' => $formattedSpecialty,
+            'display' => MilitaryFormatter::buildDisplayName($formattedRank, $formattedName, $formattedSpecialty),
         ];
     }
 
     private function buildOptionKey(array $normalized): string
     {
         $keyParts = [
+            $normalized['id'] ?? '',
             $normalized['name'] ?? '',
-            $normalized['rank'] ?? '',
-            $normalized['specialty'] ?? '',
+            $normalized['rank_display'] ?? ($normalized['rank'] ?? ''),
             $normalized['type'] ?? '',
         ];
 

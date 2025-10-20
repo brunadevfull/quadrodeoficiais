@@ -210,19 +210,36 @@ $personnelErrors = $personnelErrors ?? [];
                         <option value="">Selecione um Oficial</option>
                         <?php foreach ($officerOptions as $option): ?>
                             <?php
-                                $optionRank = $option['rank'] ?? '';
-                                $optionName = $option['name'] ?? $option['value'] ?? '';
+                                $optionValue = $option['value'] ?? '';
+                                $optionName = $option['name'] ?? '';
+                                $optionRankDisplay = $option['rank'] ?? '';
+                                $optionShortRank = $option['short_rank'] ?? '';
                                 $optionType = $option['type'] ?? 'officer';
                                 $optionSpecialty = $option['specialty'] ?? '';
-                                $optionValue = $option['value'] ?? $optionName;
+                                $optionDisplay = $option['display'] ?? '';
+
+                                if ($optionDisplay === '') {
+                                    $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
+                                }
+
+                                if ($optionValue === '') {
+                                    $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
+                                }
+
+                                if ($optionValue === '' || $optionDisplay === '') {
+                                    continue;
+                                }
                             ?>
                             <option
                                 value="<?php echo htmlspecialchars($optionValue); ?>"
-                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                data-rank="<?php echo htmlspecialchars($optionRankDisplay); ?>"
+                                data-short-rank="<?php echo htmlspecialchars($optionShortRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
                                 data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
+                                data-display="<?php echo htmlspecialchars($optionDisplay); ?>"
+                                data-raw-name="<?php echo htmlspecialchars($optionName); ?>"
                             >
-                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                                <?php echo htmlspecialchars($optionDisplay); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -234,19 +251,36 @@ $personnelErrors = $personnelErrors ?? [];
                         <option value="">Selecione um Contramestre</option>
                         <?php foreach ($masterOptions as $option): ?>
                             <?php
-                                $optionRank = $option['rank'] ?? '';
-                                $optionName = $option['name'] ?? $option['value'] ?? '';
+                                $optionValue = $option['value'] ?? '';
+                                $optionName = $option['name'] ?? '';
+                                $optionRankDisplay = $option['rank'] ?? '';
+                                $optionShortRank = $option['short_rank'] ?? '';
                                 $optionType = $option['type'] ?? 'master';
                                 $optionSpecialty = $option['specialty'] ?? '';
-                                $optionValue = $option['value'] ?? $optionName;
+                                $optionDisplay = $option['display'] ?? '';
+
+                                if ($optionDisplay === '') {
+                                    $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
+                                }
+
+                                if ($optionValue === '') {
+                                    $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
+                                }
+
+                                if ($optionValue === '' || $optionDisplay === '') {
+                                    continue;
+                                }
                             ?>
                             <option
                                 value="<?php echo htmlspecialchars($optionValue); ?>"
-                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
+                                data-rank="<?php echo htmlspecialchars($optionRankDisplay); ?>"
+                                data-short-rank="<?php echo htmlspecialchars($optionShortRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
                                 data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
+                                data-display="<?php echo htmlspecialchars($optionDisplay); ?>"
+                                data-raw-name="<?php echo htmlspecialchars($optionName); ?>"
                             >
-                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                                <?php echo htmlspecialchars($optionDisplay); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -294,7 +328,7 @@ $personnelErrors = $personnelErrors ?? [];
             document.getElementById('errorLoadingOfficers').classList.add('hidden');
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = 'proxy-duty-officers.php';
+            const apiUrl = '../../proxy-duty-officers.php';
 
             fetch(apiUrl, {
                 method: 'GET',
@@ -316,8 +350,15 @@ $personnelErrors = $personnelErrors ?? [];
                     document.getElementById('officersDisplay').classList.remove('hidden');
                     
                     // Atualizar os dados na interface
-                    document.getElementById('currentOfficer').textContent = formatDutyDisplay(data.officers.officerName);
-                    document.getElementById('currentMaster').textContent = formatDutyDisplay(data.officers.masterName);
+                    const officerName = data.officers.officerName ?? null;
+                    const officerRank = data.officers.officerRank ?? null;
+                    const officerDisplayName = data.officers.officerDisplayName ?? officerName;
+                    const masterName = data.officers.masterName ?? null;
+                    const masterRank = data.officers.masterRank ?? null;
+                    const masterDisplayName = data.officers.masterDisplayName ?? masterName;
+
+                    document.getElementById('currentOfficer').textContent = formatDutyDisplay(officerDisplayName, officerRank);
+                    document.getElementById('currentMaster').textContent = formatDutyDisplay(masterDisplayName, masterRank);
                     
                     // Formatar data de atualização
                     const updatedDate = data.officers.updatedAt ? new Date(data.officers.updatedAt) : null;
@@ -325,12 +366,12 @@ $personnelErrors = $personnelErrors ?? [];
                         updatedDate.toLocaleString('pt-BR') : '-';
                     
                     // Pré-selecionar os valores nos dropdowns, se disponíveis
-                    if (data.officers.officerName) {
-                        selectOptionByValue('officerSelect', data.officers.officerName);
+                    if (data.officers.officerName || data.officers.officerRank) {
+                        selectOptionByValue('officerSelect', data.officers.officerName, data.officers.officerRank);
                     }
 
-                    if (data.officers.masterName) {
-                        selectOptionByValue('masterSelect', data.officers.masterName);
+                    if (data.officers.masterName || data.officers.masterRank) {
+                        selectOptionByValue('masterSelect', data.officers.masterName, data.officers.masterRank);
                     }
                 } else {
                     document.getElementById('errorLoadingOfficers').classList.remove('hidden');
@@ -345,22 +386,66 @@ $personnelErrors = $personnelErrors ?? [];
         }
 
         // Função para selecionar uma opção no dropdown pelo texto
-        function selectOptionByValue(selectId, value) {
+        function selectOptionByValue(selectId, value, rank = null) {
             const selectElement = document.getElementById(selectId);
+
+            if (!selectElement) {
+                return;
+            }
+
+            const normalizedValue = typeof value === 'string' ? value.trim() : '';
+            const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
+
+            if (normalizedValue === '' && normalizedRank === '') {
+                selectElement.value = '';
+                selectElement.dispatchEvent(new Event('change'));
+                return;
+            }
+
             for (let i = 0; i < selectElement.options.length; i++) {
                 const option = selectElement.options[i];
-                if (option.value === value) {
+                const optionValue = option.value?.trim?.() ?? '';
+                const optionDisplay = option.dataset.display?.trim?.() ?? '';
+                const optionRawName = option.dataset.rawName?.trim?.() ?? '';
+                const optionRank = option.dataset.rank?.trim?.() ?? '';
+
+                const matchesValue = normalizedValue !== '' && (
+                    optionValue === normalizedValue ||
+                    optionDisplay === normalizedValue ||
+                    optionRawName === normalizedValue
+                );
+
+                const matchesRank = normalizedRank !== '' && optionRank === normalizedRank;
+
+                if (matchesValue || matchesRank) {
                     selectElement.selectedIndex = i;
+                    selectElement.dispatchEvent(new Event('change'));
                     break;
                 }
             }
         }
 
-        function formatDutyDisplay(name) {
-            if (!name || name.trim() === '') {
+        function formatDutyDisplay(name, rank) {
+            const normalizedName = typeof name === 'string' ? name.trim() : '';
+            const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
+
+            if (normalizedName === '' && normalizedRank === '') {
                 return 'Não definido';
             }
-            return name.trim();
+
+            if (normalizedName === '') {
+                return normalizedRank;
+            }
+
+            if (normalizedRank === '') {
+                return normalizedName;
+            }
+
+            if (normalizedName.toUpperCase().startsWith(normalizedRank.toUpperCase())) {
+                return normalizedName;
+            }
+
+            return `${normalizedRank} ${normalizedName}`.trim();
         }
 
         // Função para atualizar os oficiais de serviço
@@ -378,33 +463,37 @@ $personnelErrors = $personnelErrors ?? [];
             const officerSelect = document.getElementById('officerSelect');
             const masterSelect = document.getElementById('masterSelect');
             
-            const officerOption = officerSelect.options[officerSelect.selectedIndex];
-            const masterOption = masterSelect.options[masterSelect.selectedIndex];
+            const officerOption = officerSelect?.options[officerSelect.selectedIndex] ?? null;
+            const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
 
-            const officerName = officerOption.value;
-            const officerRank = officerOption.dataset.rank || null;
-            const masterName = masterOption.value;
-            const masterRank = masterOption.dataset.rank || null;
-            
+            const officerName = officerOption ? officerOption.value : '';
+            const officerRank = officerOption ? officerOption.dataset.rank || null : null;
+            const officerSpecialty = officerOption ? officerOption.dataset.specialty || null : null;
+            const masterName = masterOption ? masterOption.value : '';
+            const masterRank = masterOption ? masterOption.dataset.rank || null : null;
+            const masterSpecialty = masterOption ? masterOption.dataset.specialty || null : null;
+
             // Verificar se pelo menos um oficial foi selecionado
-            if (officerSelect.value === "" && masterSelect.value === "") {
+            if (officerName === "" && masterName === "") {
                 document.getElementById('formError').textContent = 'Selecione pelo menos um oficial de serviço.';
                 document.getElementById('formError').classList.remove('hidden');
                 updateButton.disabled = false;
                 updateSpinner.classList.add('hidden');
                 return;
             }
-            
+
             // Preparar dados para envio
             const officerData = {
-                officerName: officerSelect.value === "" ? null : officerName,
-                officerRank: officerSelect.value === "" ? null : officerRank,
-                masterName: masterSelect.value === "" ? null : masterName,
-                masterRank: masterSelect.value === "" ? null : masterRank
+                officerName: officerName === "" ? null : officerName,
+                officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+                officerSpecialty: officerSpecialty === null || officerSpecialty === '' ? null : officerSpecialty,
+                masterName: masterName === "" ? null : masterName,
+                masterRank: masterRank === null || masterRank === '' ? null : masterRank,
+                masterSpecialty: masterSpecialty === null || masterSpecialty === '' ? null : masterSpecialty
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = 'proxy-duty-officers.php';
+            const apiUrl = '../../proxy-duty-officers.php';
 
             // Enviar requisição para a API
             fetch(apiUrl, {
