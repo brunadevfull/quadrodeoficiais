@@ -48,21 +48,15 @@ class DutyAssignmentsRepository
     {
         $officerName = $this->sanitizeNullableString($data['officerName'] ?? null);
         $officerRank = $this->sanitizeNullableString($data['officerRank'] ?? null);
-        $officerSpecialty = $this->sanitizeNullableString($data['officerSpecialty'] ?? null);
         $masterName = $this->sanitizeNullableString($data['masterName'] ?? null);
         $masterRank = $this->sanitizeNullableString($data['masterRank'] ?? null);
-        $masterSpecialty = $this->sanitizeNullableString($data['masterSpecialty'] ?? null);
 
         $officerName = $officerName !== null ? MilitaryFormatter::formatName($officerName) : null;
         $officerRank = $officerRank !== null ? MilitaryFormatter::formatRank($officerRank) : null;
-        $officerSpecialty = $officerSpecialty !== null ? MilitaryFormatter::formatSpecialty($officerSpecialty) : null;
-        $officerRank = MilitaryFormatter::buildRankWithSpecialty($officerRank, $officerSpecialty);
         $officerRank = $officerRank === '' ? null : $officerRank;
 
         $masterName = $masterName !== null ? MilitaryFormatter::formatName($masterName) : null;
         $masterRank = $masterRank !== null ? MilitaryFormatter::formatRank($masterRank) : null;
-        $masterSpecialty = $masterSpecialty !== null ? MilitaryFormatter::formatSpecialty($masterSpecialty) : null;
-        $masterRank = MilitaryFormatter::buildRankWithSpecialty($masterRank, $masterSpecialty);
         $masterRank = $masterRank === '' ? null : $masterRank;
         $validFrom = $data['validFrom'] ?? null;
 
