@@ -312,8 +312,8 @@ $personnelErrors = $personnelErrors ?? [];
                     document.getElementById('officersDisplay').classList.remove('hidden');
                     
                     // Atualizar os dados na interface
-                    document.getElementById('currentOfficer').textContent = data.officers.officerName || 'Não definido';
-                    document.getElementById('currentMaster').textContent = data.officers.masterName || 'Não definido';
+                    document.getElementById('currentOfficer').textContent = formatDutyDisplay(data.officers.officerName, data.officers.officerRank);
+                    document.getElementById('currentMaster').textContent = formatDutyDisplay(data.officers.masterName, data.officers.masterRank);
                     
                     // Formatar data de atualização
                     const updatedDate = data.officers.updatedAt ? new Date(data.officers.updatedAt) : null;
@@ -322,11 +322,11 @@ $personnelErrors = $personnelErrors ?? [];
                     
                     // Pré-selecionar os valores nos dropdowns, se disponíveis
                     if (data.officers.officerName) {
-                        selectOptionByText('officerSelect', data.officers.officerName);
+                        selectOptionByValue('officerSelect', data.officers.officerName);
                     }
-                    
+
                     if (data.officers.masterName) {
-                        selectOptionByText('masterSelect', data.officers.masterName);
+                        selectOptionByValue('masterSelect', data.officers.masterName);
                     }
                 } else {
                     document.getElementById('errorLoadingOfficers').classList.remove('hidden');
@@ -341,15 +341,27 @@ $personnelErrors = $personnelErrors ?? [];
         }
 
         // Função para selecionar uma opção no dropdown pelo texto
-        function selectOptionByText(selectId, text) {
+        function selectOptionByValue(selectId, value) {
             const selectElement = document.getElementById(selectId);
             for (let i = 0; i < selectElement.options.length; i++) {
                 const option = selectElement.options[i];
-                if (option.text.includes(text) || option.value.includes(text)) {
+                if (option.value === value) {
                     selectElement.selectedIndex = i;
                     break;
                 }
             }
+        }
+
+        function formatDutyDisplay(name, rank) {
+            if (!name || name.trim() === '') {
+                return 'Não definido';
+            }
+
+            if (!rank || rank.trim() === '') {
+                return name;
+            }
+
+            return `${rank} ${name}`;
         }
 
         // Função para atualizar os oficiais de serviço
@@ -367,8 +379,13 @@ $personnelErrors = $personnelErrors ?? [];
             const officerSelect = document.getElementById('officerSelect');
             const masterSelect = document.getElementById('masterSelect');
             
-            const officerName = officerSelect.options[officerSelect.selectedIndex].text;
-            const masterName = masterSelect.options[masterSelect.selectedIndex].text;
+            const officerOption = officerSelect.options[officerSelect.selectedIndex];
+            const masterOption = masterSelect.options[masterSelect.selectedIndex];
+
+            const officerName = officerOption.value;
+            const officerRank = officerOption.dataset.rank || null;
+            const masterName = masterOption.value;
+            const masterRank = masterOption.dataset.rank || null;
             
             // Verificar se pelo menos um oficial foi selecionado
             if (officerSelect.value === "" && masterSelect.value === "") {
@@ -382,7 +399,9 @@ $personnelErrors = $personnelErrors ?? [];
             // Preparar dados para envio
             const officerData = {
                 officerName: officerSelect.value === "" ? null : officerName,
-                masterName: masterSelect.value === "" ? null : masterName
+                officerRank: officerSelect.value === "" ? null : officerRank,
+                masterName: masterSelect.value === "" ? null : masterName,
+                masterRank: masterSelect.value === "" ? null : masterRank
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
