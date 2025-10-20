@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/MilitaryFormatter.php';
+
 class DutyAssignmentsRepository
 {
     private PDO $pdo;
@@ -46,8 +48,22 @@ class DutyAssignmentsRepository
     {
         $officerName = $this->sanitizeNullableString($data['officerName'] ?? null);
         $officerRank = $this->sanitizeNullableString($data['officerRank'] ?? null);
+        $officerSpecialty = $this->sanitizeNullableString($data['officerSpecialty'] ?? null);
         $masterName = $this->sanitizeNullableString($data['masterName'] ?? null);
         $masterRank = $this->sanitizeNullableString($data['masterRank'] ?? null);
+        $masterSpecialty = $this->sanitizeNullableString($data['masterSpecialty'] ?? null);
+
+        $officerName = $officerName !== null ? MilitaryFormatter::formatName($officerName) : null;
+        $officerRank = $officerRank !== null ? MilitaryFormatter::formatRank($officerRank) : null;
+        $officerSpecialty = $officerSpecialty !== null ? MilitaryFormatter::formatSpecialty($officerSpecialty) : null;
+        $officerRank = MilitaryFormatter::buildRankWithSpecialty($officerRank, $officerSpecialty);
+        $officerRank = $officerRank === '' ? null : $officerRank;
+
+        $masterName = $masterName !== null ? MilitaryFormatter::formatName($masterName) : null;
+        $masterRank = $masterRank !== null ? MilitaryFormatter::formatRank($masterRank) : null;
+        $masterSpecialty = $masterSpecialty !== null ? MilitaryFormatter::formatSpecialty($masterSpecialty) : null;
+        $masterRank = MilitaryFormatter::buildRankWithSpecialty($masterRank, $masterSpecialty);
+        $masterRank = $masterRank === '' ? null : $masterRank;
         $validFrom = $data['validFrom'] ?? null;
 
         if ($validFrom instanceof DateTimeInterface) {
@@ -135,12 +151,28 @@ class DutyAssignmentsRepository
         $validFrom = $this->formatDateTime($row['valid_from'] ?? null);
         $updatedAt = $this->formatDateTime($row['updated_at'] ?? null);
 
+        $officerName = $this->sanitizeNullableString($row['officer_name'] ?? null);
+        $officerRank = $this->sanitizeNullableString($row['officer_rank'] ?? null);
+        $masterName = $this->sanitizeNullableString($row['master_name'] ?? null);
+        $masterRank = $this->sanitizeNullableString($row['master_rank'] ?? null);
+
+        $officerName = $officerName !== null ? MilitaryFormatter::formatName($officerName) : null;
+        $officerRank = $officerRank !== null ? MilitaryFormatter::formatRank($officerRank) : null;
+        $masterName = $masterName !== null ? MilitaryFormatter::formatName($masterName) : null;
+        $masterRank = $masterRank !== null ? MilitaryFormatter::formatRank($masterRank) : null;
+
         return [
             'id' => isset($row['id']) ? (int)$row['id'] : null,
-            'officerName' => $this->sanitizeNullableString($row['officer_name'] ?? null),
-            'officerRank' => $this->sanitizeNullableString($row['officer_rank'] ?? null),
-            'masterName' => $this->sanitizeNullableString($row['master_name'] ?? null),
-            'masterRank' => $this->sanitizeNullableString($row['master_rank'] ?? null),
+            'officerName' => $officerName,
+            'officerRank' => $officerRank,
+            'officerDisplayName' => $officerName !== null || $officerRank !== null
+                ? MilitaryFormatter::buildDisplayName($officerRank, $officerName)
+                : null,
+            'masterName' => $masterName,
+            'masterRank' => $masterRank,
+            'masterDisplayName' => $masterName !== null || $masterRank !== null
+                ? MilitaryFormatter::buildDisplayName($masterRank, $masterName)
+                : null,
             'validFrom' => $validFrom,
             'updatedAt' => $updatedAt,
         ];

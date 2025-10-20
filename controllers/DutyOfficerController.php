@@ -1,4 +1,6 @@
 <?php
+require_once 'includes/MilitaryFormatter.php';
+
 class DutyOfficerController {
     public function index() {
         include 'models/Oficial.php';
@@ -86,11 +88,24 @@ class DutyOfficerController {
 
             $rank = $oficial['descricao'] ?? '';
 
+            $formattedName = MilitaryFormatter::formatName((string)$name);
+            $formattedRank = MilitaryFormatter::formatRank((string)$rank);
+            $formattedSpecialty = '';
+
+            $display = MilitaryFormatter::buildDisplayName($formattedRank, $formattedName, $formattedSpecialty);
+
+            if ($display === '') {
+                continue;
+            }
+
             $options[] = [
-                'value' => $name,
-                'name' => $name,
-                'rank' => $rank,
+                'value' => $formattedName,
+                'name' => $formattedName,
+                'rank' => MilitaryFormatter::buildRankWithSpecialty($formattedRank, $formattedSpecialty),
+                'short_rank' => $formattedRank,
                 'type' => $type,
+                'specialty' => $formattedSpecialty,
+                'display' => $display,
             ];
         }
 
