@@ -9,6 +9,8 @@ include $_SERVER['DOCUMENT_ROOT'].'/config/config.php';
 $is_logged_in = isset($_SESSION['user_id']);
 $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 $is_portaria = isset($_SESSION['user_id']) && !$is_admin;
+$username = strtolower($_SESSION['username'] ?? '');
+$can_manage_duty_officers = $is_logged_in && ($is_admin || $username === 'eor');
 
 
 
@@ -98,10 +100,12 @@ $masterOptions = $masterOptions ?? [];
         </div>
     <?php endif; ?>
 
-    <!-- Botão Gerenciar Oficiais de Serviço - para todos os usuários logados -->
-    <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
-        Gerenciar Oficiais de Serviço
-    </button>
+    <?php if ($can_manage_duty_officers): ?>
+        <!-- Botão Gerenciar Oficiais de Serviço - apenas para administradores e usuário EOR -->
+        <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
+            Gerenciar Oficiais de Serviço
+        </button>
+    <?php endif; ?>
 
     <!-- Botão de Logout -->
     <button class="glass-button logout-button" onclick="window.location.href='views/logout.php'">Logout</button>
@@ -139,6 +143,7 @@ $masterOptions = $masterOptions ?? [];
 
 
 
+<?php if ($can_manage_duty_officers): ?>
 <!-- Modal Gerenciar Oficiais de Serviço -->
 <div class="modal fade" id="dutyOfficersModal" tabindex="-1" role="dialog" aria-labelledby="dutyOfficersModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -261,6 +266,7 @@ $masterOptions = $masterOptions ?? [];
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 
 

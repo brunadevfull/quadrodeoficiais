@@ -14,7 +14,12 @@ class DutyOfficerController {
             header('Location: views/login.php');
             exit();
         }
-        
+
+        if (!$this->userCanManageDutyOfficers()) {
+            http_response_code(403);
+            exit('Acesso não autorizado.');
+        }
+
         $body_class = 'logged-in';
 
         $personnelRepository = new MilitaryPersonnelRepository();
@@ -104,6 +109,13 @@ class DutyOfficerController {
             exit();
         }
 
+        if (!$this->userCanManageDutyOfficers()) {
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Acesso não autorizado']);
+            exit();
+        }
+
         // Recebe dados do formulário
         $officerName = $_POST['officerName'] ?? '';
         $masterName = $_POST['masterName'] ?? '';
@@ -134,6 +146,15 @@ class DutyOfficerController {
         // A lógica real será implementada no JavaScript
         echo json_encode(['success' => true]);
         exit();
+}
+
+    private function userCanManageDutyOfficers(): bool
+    {
+        $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+        $username = strtolower($_SESSION['username'] ?? '');
+
+        return isset($_SESSION['user_id']) && ($isAdmin || $username === 'eor');
     }
 }
 ?>
+
