@@ -193,7 +193,6 @@ $masterOptions = $masterOptions ?? [];
                                             $optionRankDisplay = $option['rank'] ?? '';
                                             $optionShortRank = $option['short_rank'] ?? '';
                                             $optionType = $option['type'] ?? 'officer';
-                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $optionDisplay = $option['display'] ?? '';
 
                                             if ($optionDisplay === '') {
@@ -213,7 +212,6 @@ $masterOptions = $masterOptions ?? [];
                                             data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
@@ -237,7 +235,6 @@ $masterOptions = $masterOptions ?? [];
                                             $optionRankDisplay = $option['rank'] ?? '';
                                             $optionShortRank = $option['short_rank'] ?? '';
                                             $optionType = $option['type'] ?? 'master';
-                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $optionDisplay = $option['display'] ?? '';
 
                                             if ($optionDisplay === '') {
@@ -257,7 +254,6 @@ $masterOptions = $masterOptions ?? [];
                                             data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
@@ -690,10 +686,8 @@ function updateDutyOfficers() {
 
     const officerName = officerOption ? officerOption.value : '';
     const officerRank = officerOption ? officerOption.dataset.rank || null : null;
-    const officerSpecialty = officerOption ? officerOption.dataset.specialty || null : null;
     const masterName = masterOption ? masterOption.value : '';
     const masterRank = masterOption ? masterOption.dataset.rank || null : null;
-    const masterSpecialty = masterOption ? masterOption.dataset.specialty || null : null;
     
     // Verificar se pelo menos um oficial foi selecionado
     if (officerName === "" && masterName === "") {
@@ -708,10 +702,8 @@ function updateDutyOfficers() {
     const officerData = {
         officerName: officerName === "" ? null : officerName,
         officerRank: officerRank === null || officerRank === '' ? null : officerRank,
-        officerSpecialty: officerSpecialty === null || officerSpecialty === '' ? null : officerSpecialty,
         masterName: masterName === "" ? null : masterName,
         masterRank: masterRank === null || masterRank === '' ? null : masterRank,
-        masterSpecialty: masterSpecialty === null || masterSpecialty === '' ? null : masterSpecialty
     };
     
     // Usar o proxy PHP no mesmo domínio

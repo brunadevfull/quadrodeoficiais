@@ -215,7 +215,6 @@ $personnelErrors = $personnelErrors ?? [];
                                 $optionRankDisplay = $option['rank'] ?? '';
                                 $optionShortRank = $option['short_rank'] ?? '';
                                 $optionType = $option['type'] ?? 'officer';
-                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionDisplay = $option['display'] ?? '';
 
                                 if ($optionDisplay === '') {
@@ -235,7 +234,6 @@ $personnelErrors = $personnelErrors ?? [];
                                 data-rank="<?php echo htmlspecialchars($optionRankDisplay); ?>"
                                 data-short-rank="<?php echo htmlspecialchars($optionShortRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
-                                data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
                                 data-display="<?php echo htmlspecialchars($optionDisplay); ?>"
                                 data-raw-name="<?php echo htmlspecialchars($optionName); ?>"
                             >
@@ -256,7 +254,6 @@ $personnelErrors = $personnelErrors ?? [];
                                 $optionRankDisplay = $option['rank'] ?? '';
                                 $optionShortRank = $option['short_rank'] ?? '';
                                 $optionType = $option['type'] ?? 'master';
-                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionDisplay = $option['display'] ?? '';
 
                                 if ($optionDisplay === '') {
@@ -276,7 +273,6 @@ $personnelErrors = $personnelErrors ?? [];
                                 data-rank="<?php echo htmlspecialchars($optionRankDisplay); ?>"
                                 data-short-rank="<?php echo htmlspecialchars($optionShortRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
-                                data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
                                 data-display="<?php echo htmlspecialchars($optionDisplay); ?>"
                                 data-raw-name="<?php echo htmlspecialchars($optionName); ?>"
                             >
@@ -468,10 +464,8 @@ $personnelErrors = $personnelErrors ?? [];
 
             const officerName = officerOption ? officerOption.value : '';
             const officerRank = officerOption ? officerOption.dataset.rank || null : null;
-            const officerSpecialty = officerOption ? officerOption.dataset.specialty || null : null;
             const masterName = masterOption ? masterOption.value : '';
             const masterRank = masterOption ? masterOption.dataset.rank || null : null;
-            const masterSpecialty = masterOption ? masterOption.dataset.specialty || null : null;
 
             // Verificar se pelo menos um oficial foi selecionado
             if (officerName === "" && masterName === "") {
@@ -486,10 +480,8 @@ $personnelErrors = $personnelErrors ?? [];
             const officerData = {
                 officerName: officerName === "" ? null : officerName,
                 officerRank: officerRank === null || officerRank === '' ? null : officerRank,
-                officerSpecialty: officerSpecialty === null || officerSpecialty === '' ? null : officerSpecialty,
                 masterName: masterName === "" ? null : masterName,
                 masterRank: masterRank === null || masterRank === '' ? null : masterRank,
-                masterSpecialty: masterSpecialty === null || masterSpecialty === '' ? null : masterSpecialty
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
