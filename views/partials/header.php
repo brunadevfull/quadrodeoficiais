@@ -192,6 +192,7 @@ $masterOptions = $masterOptions ?? [];
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
                                             $optionType = $option['type'] ?? 'officer';
+                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
@@ -210,6 +211,7 @@ $masterOptions = $masterOptions ?? [];
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
@@ -230,6 +232,7 @@ $masterOptions = $masterOptions ?? [];
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
                                             $optionType = $option['type'] ?? 'master';
+                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
@@ -248,6 +251,7 @@ $masterOptions = $masterOptions ?? [];
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
