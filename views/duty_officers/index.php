@@ -213,12 +213,14 @@ $personnelErrors = $personnelErrors ?? [];
                                 $optionRank = $option['rank'] ?? '';
                                 $optionName = $option['name'] ?? $option['value'] ?? '';
                                 $optionType = $option['type'] ?? 'officer';
+                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionValue = $option['value'] ?? $optionName;
                             ?>
                             <option
                                 value="<?php echo htmlspecialchars($optionValue); ?>"
                                 data-rank="<?php echo htmlspecialchars($optionRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
                             >
                                 <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
                             </option>
@@ -235,12 +237,14 @@ $personnelErrors = $personnelErrors ?? [];
                                 $optionRank = $option['rank'] ?? '';
                                 $optionName = $option['name'] ?? $option['value'] ?? '';
                                 $optionType = $option['type'] ?? 'master';
+                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionValue = $option['value'] ?? $optionName;
                             ?>
                             <option
                                 value="<?php echo htmlspecialchars($optionValue); ?>"
                                 data-rank="<?php echo htmlspecialchars($optionRank); ?>"
                                 data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                data-specialty="<?php echo htmlspecialchars($optionSpecialty); ?>"
                             >
                                 <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
                             </option>

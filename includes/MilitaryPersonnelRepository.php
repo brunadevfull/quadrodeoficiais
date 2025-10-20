@@ -48,13 +48,22 @@ class MilitaryPersonnelRepository
                 continue;
             }
 
-            $options[] = [
+            $optionKey = $this->buildOptionKey($normalized);
+
+            if (isset($options[$optionKey])) {
+                continue;
+            }
+
+            $options[$optionKey] = [
                 'value' => $normalized['name'],
                 'name' => $normalized['name'],
                 'rank' => $normalized['rank'],
                 'type' => $normalized['type'],
+                'specialty' => $normalized['specialty'],
             ];
         }
+
+        $options = array_values($options);
 
         usort($options, static function (array $left, array $right): int {
             return strcmp($left['name'], $right['name']);
@@ -116,6 +125,29 @@ class MilitaryPersonnelRepository
             'name' => trim((string)$name),
             'rank' => trim((string)$rank),
             'type' => (string)$type,
+            'specialty' => trim((string)($row['specialty'] ?? $row['especialidade'] ?? '')),
         ];
+    }
+
+    private function buildOptionKey(array $normalized): string
+    {
+        $keyParts = [
+            $normalized['name'] ?? '',
+            $normalized['rank'] ?? '',
+            $normalized['specialty'] ?? '',
+            $normalized['type'] ?? '',
+        ];
+
+        $normalizedParts = array_map(static function ($part) {
+            $part = (string)$part;
+
+            if (function_exists('mb_strtolower')) {
+                return mb_strtolower($part, 'UTF-8');
+            }
+
+            return strtolower($part);
+        }, $keyParts);
+
+        return implode('|', $normalizedParts);
     }
 }
