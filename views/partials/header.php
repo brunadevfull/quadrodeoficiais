@@ -191,6 +191,7 @@ $masterOptions = $masterOptions ?? [];
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'officer';
                                             $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
@@ -205,7 +206,11 @@ $masterOptions = $masterOptions ?? [];
                                                 continue;
                                             }
                                         ?>
-                                        <option value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <option
+                                            value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                        >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -224,6 +229,7 @@ $masterOptions = $masterOptions ?? [];
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'master';
                                             $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
@@ -238,7 +244,11 @@ $masterOptions = $masterOptions ?? [];
                                                 continue;
                                             }
                                         ?>
-                                        <option value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <option
+                                            value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                        >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -556,11 +566,30 @@ $(document).ready(function() {
     $('#dutyOfficersModal').on('shown.bs.modal', function() {
         loadCurrentDutyOfficers();
     });
-    
+
     $('#updateOfficersButton').on('click', function() {
         updateDutyOfficers();
     });
 });
+
+function formatDutyDisplay(name, rank) {
+    const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
+
+    if (normalizedName === '' && normalizedRank === '') {
+        return 'Não definido';
+    }
+
+    if (normalizedRank === '') {
+        return normalizedName;
+    }
+
+    if (normalizedName === '') {
+        return normalizedRank;
+    }
+
+    return `${normalizedRank} ${normalizedName}`;
+}
 
 // Função para carregar os oficiais de serviço atuais
 function loadCurrentDutyOfficers() {
@@ -589,10 +618,15 @@ function loadCurrentDutyOfficers() {
         
         if (data.success) {
             $('#officersDisplay').removeClass('d-none');
-            
+
+            const officerName = data.officers?.officerName ?? null;
+            const officerRank = data.officers?.officerRank ?? null;
+            const masterName = data.officers?.masterName ?? null;
+            const masterRank = data.officers?.masterRank ?? null;
+
             // Atualizar os dados na interface
-            $('#currentOfficer').text(data.officers?.officerName || 'Não definido');
-            $('#currentMaster').text(data.officers?.masterName || 'Não definido');
+            $('#currentOfficer').text(formatDutyDisplay(officerName, officerRank));
+            $('#currentMaster').text(formatDutyDisplay(masterName, masterRank));
             
             // Formatar data de atualização
             const updatedDate = data.officers?.updatedAt ? new Date(data.officers.updatedAt) : null;
@@ -600,11 +634,11 @@ function loadCurrentDutyOfficers() {
             
             // Pré-selecionar os valores nos dropdowns, se disponíveis
             if (data.officers?.officerName) {
-                selectOptionByText('officerSelect', data.officers.officerName);
+                selectOptionByValue('officerSelect', data.officers.officerName);
             }
-            
+
             if (data.officers?.masterName) {
-                selectOptionByText('masterSelect', data.officers.masterName);
+                selectOptionByValue('masterSelect', data.officers.masterName);
             }
         } else {
             $('#errorLoadingOfficers').removeClass('d-none');
@@ -632,9 +666,14 @@ function updateDutyOfficers() {
     // Obter valores dos campos
     const officerSelect = document.getElementById('officerSelect');
     const masterSelect = document.getElementById('masterSelect');
-    
-    const officerName = $(officerSelect).val();
-    const masterName = $(masterSelect).val();
+
+    const officerOption = officerSelect?.options[officerSelect.selectedIndex] ?? null;
+    const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
+
+    const officerName = officerOption ? officerOption.value : '';
+    const officerRank = officerOption ? officerOption.dataset.rank || null : null;
+    const masterName = masterOption ? masterOption.value : '';
+    const masterRank = masterOption ? masterOption.dataset.rank || null : null;
     
     // Verificar se pelo menos um oficial foi selecionado
     if (officerName === "" && masterName === "") {
@@ -644,11 +683,13 @@ function updateDutyOfficers() {
         updateSpinner.addClass('d-none');
         return;
     }
-    
+
     // Preparar dados para envio
     const officerData = {
         officerName: officerName === "" ? null : officerName,
-        masterName: masterName === "" ? null : masterName
+        officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+        masterName: masterName === "" ? null : masterName,
+        masterRank: masterRank === null || masterRank === '' ? null : masterRank
     };
     
     // Usar o proxy PHP no mesmo domínio
@@ -694,21 +735,25 @@ function updateDutyOfficers() {
     });
 }
 
-// Função para selecionar uma opção no dropdown pelo texto
-function selectOptionByText(selectId, text) {
+// Função para selecionar uma opção no dropdown pelo valor
+function selectOptionByValue(selectId, value) {
     const selectElement = document.getElementById(selectId);
-    if (!selectElement) return;
-    
-    // Reset any previous selection
-    $(selectElement).val('');
-    
-    // Find and select the option that contains the text
+    if (!selectElement) {
+        return;
+    }
+
+    const normalizedValue = typeof value === 'string' ? value.trim() : '';
+
+    if (normalizedValue === '') {
+        $(selectElement).val('').trigger('change');
+        return;
+    }
+
     for (let i = 0; i < selectElement.options.length; i++) {
         const option = selectElement.options[i];
-        if (option.text.includes(text) || option.value.includes(text)) {
-            const newValue = option.value;
-            selectElement.value = newValue;
-            break;
+        if (option.value === normalizedValue) {
+            $(selectElement).val(option.value).trigger('change');
+            return;
         }
     }
 }
