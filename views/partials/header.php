@@ -614,7 +614,7 @@ function loadCurrentDutyOfficers() {
     $('#errorLoadingOfficers').addClass('d-none');
     
     // Usar o proxy PHP no mesmo domínio
-    const apiUrl = 'proxy-duty-officers.php';
+    const apiUrl = '../../proxy-duty-officers.php';
     
     fetch(apiUrl, {
         method: 'GET',

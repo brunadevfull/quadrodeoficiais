@@ -328,7 +328,7 @@ $personnelErrors = $personnelErrors ?? [];
             document.getElementById('errorLoadingOfficers').classList.add('hidden');
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = 'proxy-duty-officers.php';
+            const apiUrl = '../../proxy-duty-officers.php';
 
             fetch(apiUrl, {
                 method: 'GET',
@@ -493,7 +493,7 @@ $personnelErrors = $personnelErrors ?? [];
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = 'proxy-duty-officers.php';
+            const apiUrl = '../../proxy-duty-officers.php';
 
             // Enviar requisição para a API
             fetch(apiUrl, {
