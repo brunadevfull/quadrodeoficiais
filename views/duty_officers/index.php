@@ -211,16 +211,36 @@ $personnelErrors = $personnelErrors ?? [];
                         <?php foreach ($officerOptions as $option): ?>
                             <?php
                                 $optionRank = $option['rank'] ?? '';
+                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionName = $option['name'] ?? $option['value'] ?? '';
                                 $optionType = $option['type'] ?? 'officer';
                                 $optionValue = $option['value'] ?? $optionName;
+
+                                $formattedRank = trim((string)$optionRank);
+                                if ($formattedRank !== '') {
+                                    $formattedRank = mb_strtoupper($formattedRank, 'UTF-8');
+                                }
+
+                                $formattedSpecialty = trim((string)$optionSpecialty);
+                                if ($formattedSpecialty !== '') {
+                                    $formattedSpecialty = mb_strtoupper($formattedSpecialty, 'UTF-8');
+
+                                    if ($formattedRank === '') {
+                                        $formattedRank = $formattedSpecialty;
+                                    } elseif (mb_stripos($formattedRank, $formattedSpecialty, 0, 'UTF-8') === false) {
+                                        $formattedRank = trim($formattedRank . ' ' . $formattedSpecialty);
+                                    }
+                                }
+
+                                $displayLabel = trim(($formattedRank !== '' ? $formattedRank . ' ' : '') . $optionName);
                             ?>
                             <option
-                                value="<?php echo htmlspecialchars($optionValue); ?>"
-                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
-                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-rank="<?php echo htmlspecialchars($formattedRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-specialty="<?php echo htmlspecialchars($formattedSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                             >
-                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                                <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -233,16 +253,36 @@ $personnelErrors = $personnelErrors ?? [];
                         <?php foreach ($masterOptions as $option): ?>
                             <?php
                                 $optionRank = $option['rank'] ?? '';
+                                $optionSpecialty = $option['specialty'] ?? '';
                                 $optionName = $option['name'] ?? $option['value'] ?? '';
                                 $optionType = $option['type'] ?? 'master';
                                 $optionValue = $option['value'] ?? $optionName;
+
+                                $formattedRank = trim((string)$optionRank);
+                                if ($formattedRank !== '') {
+                                    $formattedRank = mb_strtoupper($formattedRank, 'UTF-8');
+                                }
+
+                                $formattedSpecialty = trim((string)$optionSpecialty);
+                                if ($formattedSpecialty !== '') {
+                                    $formattedSpecialty = mb_strtoupper($formattedSpecialty, 'UTF-8');
+
+                                    if ($formattedRank === '') {
+                                        $formattedRank = $formattedSpecialty;
+                                    } elseif (mb_stripos($formattedRank, $formattedSpecialty, 0, 'UTF-8') === false) {
+                                        $formattedRank = trim($formattedRank . ' ' . $formattedSpecialty);
+                                    }
+                                }
+
+                                $displayLabel = trim(($formattedRank !== '' ? $formattedRank . ' ' : '') . $optionName);
                             ?>
                             <option
-                                value="<?php echo htmlspecialchars($optionValue); ?>"
-                                data-rank="<?php echo htmlspecialchars($optionRank); ?>"
-                                data-type="<?php echo htmlspecialchars($optionType); ?>"
+                                value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-rank="<?php echo htmlspecialchars($formattedRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-specialty="<?php echo htmlspecialchars($formattedSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                             >
-                                <?php echo htmlspecialchars(trim(($optionRank ? $optionRank . ' ' : '') . $optionName)); ?>
+                                <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -364,11 +404,33 @@ $personnelErrors = $personnelErrors ?? [];
             return `${rank} ${name}`;
         }
 
+        function combineRankAndSpecialty(rank, specialty) {
+            const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
+            const normalizedSpecialty = typeof specialty === 'string' ? specialty.trim() : '';
+
+            const upperRank = normalizedRank === '' ? '' : normalizedRank.toUpperCase();
+            const upperSpecialty = normalizedSpecialty === '' ? '' : normalizedSpecialty.toUpperCase();
+
+            if (upperRank === '') {
+                return upperSpecialty;
+            }
+
+            if (upperSpecialty === '') {
+                return upperRank;
+            }
+
+            if (upperRank.includes(upperSpecialty)) {
+                return upperRank;
+            }
+
+            return `${upperRank} ${upperSpecialty}`.trim();
+        }
+
         // Função para atualizar os oficiais de serviço
         function updateDutyOfficers() {
             // Limpar mensagens de erro anteriores
             document.getElementById('formError').classList.add('hidden');
-            
+
             // Mostrar spinner de carregamento
             const updateButton = document.getElementById('updateButton');
             const updateSpinner = document.getElementById('updateSpinner');
@@ -379,14 +441,18 @@ $personnelErrors = $personnelErrors ?? [];
             const officerSelect = document.getElementById('officerSelect');
             const masterSelect = document.getElementById('masterSelect');
             
-            const officerOption = officerSelect.options[officerSelect.selectedIndex];
-            const masterOption = masterSelect.options[masterSelect.selectedIndex];
+            const officerOption = officerSelect.options[officerSelect.selectedIndex] || null;
+            const masterOption = masterSelect.options[masterSelect.selectedIndex] || null;
 
-            const officerName = officerOption.value;
-            const officerRank = officerOption.dataset.rank || null;
-            const masterName = masterOption.value;
-            const masterRank = masterOption.dataset.rank || null;
-            
+            const officerName = officerOption ? officerOption.value : '';
+            const officerRank = officerOption
+                ? combineRankAndSpecialty(officerOption.dataset.rank || '', officerOption.dataset.specialty || '')
+                : '';
+            const masterName = masterOption ? masterOption.value : '';
+            const masterRank = masterOption
+                ? combineRankAndSpecialty(masterOption.dataset.rank || '', masterOption.dataset.specialty || '')
+                : '';
+
             // Verificar se pelo menos um oficial foi selecionado
             if (officerSelect.value === "" && masterSelect.value === "") {
                 document.getElementById('formError').textContent = 'Selecione pelo menos um oficial de serviço.';
@@ -399,9 +465,9 @@ $personnelErrors = $personnelErrors ?? [];
             // Preparar dados para envio
             const officerData = {
                 officerName: officerSelect.value === "" ? null : officerName,
-                officerRank: officerSelect.value === "" ? null : officerRank,
+                officerRank: officerSelect.value === "" || officerRank === '' ? null : officerRank,
                 masterName: masterSelect.value === "" ? null : masterName,
-                masterRank: masterSelect.value === "" ? null : masterRank
+                masterRank: masterSelect.value === "" || masterRank === '' ? null : masterRank
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS

@@ -191,8 +191,26 @@ $masterOptions = $masterOptions ?? [];
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
+                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $optionType = $option['type'] ?? 'officer';
-                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+
+                                            $formattedRank = trim((string)$optionRank);
+                                            if ($formattedRank !== '') {
+                                                $formattedRank = mb_strtoupper($formattedRank, 'UTF-8');
+                                            }
+
+                                            $formattedSpecialty = trim((string)$optionSpecialty);
+                                            if ($formattedSpecialty !== '') {
+                                                $formattedSpecialty = mb_strtoupper($formattedSpecialty, 'UTF-8');
+
+                                                if ($formattedRank === '') {
+                                                    $formattedRank = $formattedSpecialty;
+                                                } elseif (mb_stripos($formattedRank, $formattedSpecialty, 0, 'UTF-8') === false) {
+                                                    $formattedRank = trim($formattedRank . ' ' . $formattedSpecialty);
+                                                }
+                                            }
+
+                                            $displayLabel = trim(($formattedRank !== '' ? $formattedRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
                                                 $displayLabel = $optionValue;
@@ -208,7 +226,8 @@ $masterOptions = $masterOptions ?? [];
                                         ?>
                                         <option
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($formattedRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-specialty="<?php echo htmlspecialchars($formattedSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
@@ -229,8 +248,26 @@ $masterOptions = $masterOptions ?? [];
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
                                             $optionRank = $option['rank'] ?? '';
+                                            $optionSpecialty = $option['specialty'] ?? '';
                                             $optionType = $option['type'] ?? 'master';
-                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+
+                                            $formattedRank = trim((string)$optionRank);
+                                            if ($formattedRank !== '') {
+                                                $formattedRank = mb_strtoupper($formattedRank, 'UTF-8');
+                                            }
+
+                                            $formattedSpecialty = trim((string)$optionSpecialty);
+                                            if ($formattedSpecialty !== '') {
+                                                $formattedSpecialty = mb_strtoupper($formattedSpecialty, 'UTF-8');
+
+                                                if ($formattedRank === '') {
+                                                    $formattedRank = $formattedSpecialty;
+                                                } elseif (mb_stripos($formattedRank, $formattedSpecialty, 0, 'UTF-8') === false) {
+                                                    $formattedRank = trim($formattedRank . ' ' . $formattedSpecialty);
+                                                }
+                                            }
+
+                                            $displayLabel = trim(($formattedRank !== '' ? $formattedRank . ' ' : '') . $optionName);
 
                                             if ($displayLabel === '') {
                                                 $displayLabel = $optionValue;
@@ -246,7 +283,8 @@ $masterOptions = $masterOptions ?? [];
                                         ?>
                                         <option
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($formattedRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-specialty="<?php echo htmlspecialchars($formattedSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
                                             <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
@@ -591,6 +629,28 @@ function formatDutyDisplay(name, rank) {
     return `${normalizedRank} ${normalizedName}`;
 }
 
+function combineRankAndSpecialty(rank, specialty) {
+    const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
+    const normalizedSpecialty = typeof specialty === 'string' ? specialty.trim() : '';
+
+    const upperRank = normalizedRank === '' ? '' : normalizedRank.toUpperCase();
+    const upperSpecialty = normalizedSpecialty === '' ? '' : normalizedSpecialty.toUpperCase();
+
+    if (upperRank === '') {
+        return upperSpecialty;
+    }
+
+    if (upperSpecialty === '') {
+        return upperRank;
+    }
+
+    if (upperRank.includes(upperSpecialty)) {
+        return upperRank;
+    }
+
+    return `${upperRank} ${upperSpecialty}`.trim();
+}
+
 // Função para carregar os oficiais de serviço atuais
 function loadCurrentDutyOfficers() {
     $('#loadingCurrentOfficers').removeClass('d-none');
@@ -671,9 +731,13 @@ function updateDutyOfficers() {
     const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
 
     const officerName = officerOption ? officerOption.value : '';
-    const officerRank = officerOption ? officerOption.dataset.rank || null : null;
+    const officerRank = officerOption
+        ? combineRankAndSpecialty(officerOption.dataset.rank || '', officerOption.dataset.specialty || '')
+        : '';
     const masterName = masterOption ? masterOption.value : '';
-    const masterRank = masterOption ? masterOption.dataset.rank || null : null;
+    const masterRank = masterOption
+        ? combineRankAndSpecialty(masterOption.dataset.rank || '', masterOption.dataset.specialty || '')
+        : '';
     
     // Verificar se pelo menos um oficial foi selecionado
     if (officerName === "" && masterName === "") {
@@ -687,9 +751,9 @@ function updateDutyOfficers() {
     // Preparar dados para envio
     const officerData = {
         officerName: officerName === "" ? null : officerName,
-        officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+        officerRank: officerRank === '' ? null : officerRank,
         masterName: masterName === "" ? null : masterName,
-        masterRank: masterRank === null || masterRank === '' ? null : masterRank
+        masterRank: masterRank === '' ? null : masterRank
     };
     
     // Usar o proxy PHP no mesmo domínio

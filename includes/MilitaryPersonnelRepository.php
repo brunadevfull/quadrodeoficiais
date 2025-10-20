@@ -53,6 +53,7 @@ class MilitaryPersonnelRepository
                 'name' => $normalized['name'],
                 'rank' => $normalized['rank'],
                 'type' => $normalized['type'],
+                'specialty' => $normalized['specialty'],
             ];
         }
 
@@ -110,12 +111,51 @@ class MilitaryPersonnelRepository
     {
         $name = $row['name'] ?? $row['nome'] ?? $row['fullName'] ?? $row['full_name'] ?? '';
         $rank = $row['rank'] ?? $row['posto'] ?? $row['descricao'] ?? $row['patente'] ?? '';
+        $specialty = $row['specialty'] ?? $row['especialidade'] ?? $row['especialidade_sigla'] ?? '';
         $type = $row['type'] ?? $requestedType;
+
+        $normalizedSpecialty = $this->normalizeToUppercase($specialty);
+        $formattedRank = $this->formatRankWithSpecialty($rank, $normalizedSpecialty);
 
         return [
             'name' => trim((string)$name),
-            'rank' => trim((string)$rank),
+            'rank' => $formattedRank,
             'type' => (string)$type,
+            'specialty' => $normalizedSpecialty,
         ];
+    }
+
+    private function formatRankWithSpecialty($rank, string $normalizedSpecialty): string
+    {
+        $normalizedRank = $this->normalizeToUppercase($rank);
+
+        if ($normalizedSpecialty === '') {
+            return $normalizedRank;
+        }
+
+        if ($normalizedRank === '') {
+            return $normalizedSpecialty;
+        }
+
+        if (mb_stripos($normalizedRank, $normalizedSpecialty, 0, 'UTF-8') !== false) {
+            return $normalizedRank;
+        }
+
+        return trim($normalizedRank . ' ' . $normalizedSpecialty);
+    }
+
+    private function normalizeToUppercase($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $trimmed = trim((string)$value);
+
+        if ($trimmed === '') {
+            return '';
+        }
+
+        return mb_strtoupper($trimmed, 'UTF-8');
     }
 }
