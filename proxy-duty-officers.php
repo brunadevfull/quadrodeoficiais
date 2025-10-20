@@ -1,8 +1,8 @@
 <?php
 // Cabeçalhos para permitir CORS
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Se for uma requisição OPTIONS, apenas retornar com os cabeçalhos CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -10,82 +10,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Configurações
-$apiHost = '10.1.129.46:5001';
-$endpoint = '/api/military-personnel';
-$url = "http://$apiHost$endpoint";
+require_once __DIR__ . '/includes/DutyAssignmentsRepository.php';
 
-// Encaminhar parâmetros de consulta, se houver
-if (!empty($_SERVER['QUERY_STRING'])) {
-    $url .= '?' . $_SERVER['QUERY_STRING'];
-}
+$repository = new DutyAssignmentsRepository();
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-// Obter conteúdo da requisição
-$requestBody = file_get_contents('php://input');
-$method = $_SERVER['REQUEST_METHOD'];
-
-// Inicializar cURL
-$ch = curl_init();
-
-// Configurar opções do cURL
-curl_setopt($ch, CURLOPT_URL, $url);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-
-$headers = ['Accept: application/json'];
-
-if ($method === 'PUT' || $method === 'POST') {
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $requestBody);
-    $headers[] = 'Content-Type: application/json';
-}
-
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-// Executar requisição
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-// Verificar erros
-if (curl_errno($ch)) {
+try {
+    switch (strtoupper($method)) {
+        case 'GET':
+            handleGet($repository);
+            break;
+        case 'PUT':
+            handlePut($repository);
+            break;
+        default:
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'error' => 'Método não permitido.'
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+    }
+} catch (RuntimeException $exception) {
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
-        'error' => 'Erro na comunicação com a API: ' . curl_error($ch)
+        'error' => $exception->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+}
+
+function handleGet(DutyAssignmentsRepository $repository): void
+{
+    header('Content-Type: application/json');
+
+    $assignment = $repository->getCurrentAssignment();
+
+    if ($assignment === null) {
+        echo json_encode([
+            'success' => true,
+            'officers' => [
+                'id' => null,
+                'officerName' => null,
+                'officerRank' => null,
+                'masterName' => null,
+                'masterRank' => null,
+                'validFrom' => null,
+                'updatedAt' => null,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'officers' => $assignment,
+    ], JSON_UNESCAPED_UNICODE);
+}
+
+function handlePut(DutyAssignmentsRepository $repository): void
+{
+    header('Content-Type: application/json');
+
+    $rawBody = file_get_contents('php://input');
+    $payload = json_decode($rawBody ?? '', true);
+
+    if (!is_array($payload)) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Corpo da requisição inválido. Use JSON válido.',
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $officerName = isset($payload['officerName']) ? trim((string)$payload['officerName']) : '';
+    $masterName = isset($payload['masterName']) ? trim((string)$payload['masterName']) : '';
+
+    if ($officerName === '' && $masterName === '') {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Selecione pelo menos um oficial de serviço.',
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $assignment = $repository->createAssignment([
+        'officerName' => $payload['officerName'] ?? null,
+        'officerRank' => $payload['officerRank'] ?? null,
+        'masterName' => $payload['masterName'] ?? null,
+        'masterRank' => $payload['masterRank'] ?? null,
+        'validFrom' => $payload['validFrom'] ?? null,
     ]);
-    exit();
-}
-
-// Fechar cURL
-curl_close($ch);
-
-// Garantir que a resposta da API seja um JSON válido
-if ($response === false || $response === '') {
-    http_response_code($httpCode ?: 502);
-    header('Content-Type: application/json');
 
     echo json_encode([
-        'success' => false,
-        'error' => 'A API externa retornou uma resposta vazia.'
+        'success' => true,
+        'officers' => $assignment,
     ], JSON_UNESCAPED_UNICODE);
-    exit();
 }
-
-$decodedResponse = json_decode($response, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    http_response_code(502);
-    header('Content-Type: application/json');
-
-    echo json_encode([
-        'success' => false,
-        'error' => 'A resposta da API externa não está em um formato JSON válido.',
-        'details' => substr($response ?? '', 0, 200)
-    ], JSON_UNESCAPED_UNICODE);
-    exit();
-}
-
-// Definir código de status HTTP e retornar o JSON validado
-http_response_code($httpCode);
-header('Content-Type: application/json');
-echo json_encode($decodedResponse, JSON_UNESCAPED_UNICODE);
