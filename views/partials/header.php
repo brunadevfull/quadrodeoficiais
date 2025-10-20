@@ -190,30 +190,34 @@ $masterOptions = $masterOptions ?? [];
                                         <?php
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
-                                            $optionRank = $option['rank'] ?? '';
+                                            $optionRankDisplay = $option['rank'] ?? '';
+                                            $optionShortRank = $option['short_rank'] ?? '';
                                             $optionType = $option['type'] ?? 'officer';
                                             $optionSpecialty = $option['specialty'] ?? '';
-                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+                                            $optionDisplay = $option['display'] ?? '';
 
-                                            if ($displayLabel === '') {
-                                                $displayLabel = $optionValue;
+                                            if ($optionDisplay === '') {
+                                                $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
                                             }
 
                                             if ($optionValue === '') {
-                                                $optionValue = $displayLabel;
+                                                $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
                                             }
 
-                                            if ($optionValue === '' || $displayLabel === '') {
+                                            if ($optionValue === '' || $optionDisplay === '') {
                                                 continue;
                                             }
                                         ?>
                                         <option
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
-                                            <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
+                                            <?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -230,30 +234,34 @@ $masterOptions = $masterOptions ?? [];
                                         <?php
                                             $optionValue = $option['value'] ?? '';
                                             $optionName = $option['name'] ?? '';
-                                            $optionRank = $option['rank'] ?? '';
+                                            $optionRankDisplay = $option['rank'] ?? '';
+                                            $optionShortRank = $option['short_rank'] ?? '';
                                             $optionType = $option['type'] ?? 'master';
                                             $optionSpecialty = $option['specialty'] ?? '';
-                                            $displayLabel = trim(($optionRank ? $optionRank . ' ' : '') . $optionName);
+                                            $optionDisplay = $option['display'] ?? '';
 
-                                            if ($displayLabel === '') {
-                                                $displayLabel = $optionValue;
+                                            if ($optionDisplay === '') {
+                                                $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
                                             }
 
                                             if ($optionValue === '') {
-                                                $optionValue = $displayLabel;
+                                                $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
                                             }
 
-                                            if ($optionValue === '' || $displayLabel === '') {
+                                            if ($optionValue === '' || $optionDisplay === '') {
                                                 continue;
                                             }
                                         ?>
                                         <option
                                             value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-rank="<?php echo htmlspecialchars($optionRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-specialty="<?php echo htmlspecialchars($optionSpecialty, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
                                         >
-                                            <?php echo htmlspecialchars($displayLabel, ENT_QUOTES, 'UTF-8'); ?>
+                                            <?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -576,14 +584,27 @@ $(document).ready(function() {
     });
 });
 
-function formatDutyDisplay(name) {
+function formatDutyDisplay(name, rank) {
     const normalizedName = typeof name === 'string' ? name.trim() : '';
+    const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
 
-    if (normalizedName === '') {
+    if (normalizedName === '' && normalizedRank === '') {
         return 'Não definido';
     }
 
-    return normalizedName;
+    if (normalizedName === '') {
+        return normalizedRank;
+    }
+
+    if (normalizedRank === '') {
+        return normalizedName;
+    }
+
+    if (normalizedName.toUpperCase().startsWith(normalizedRank.toUpperCase())) {
+        return normalizedName;
+    }
+
+    return `${normalizedRank} ${normalizedName}`.trim();
 }
 
 // Função para carregar os oficiais de serviço atuais
@@ -616,24 +637,26 @@ function loadCurrentDutyOfficers() {
 
             const officerName = data.officers?.officerName ?? null;
             const officerRank = data.officers?.officerRank ?? null;
+            const officerDisplayName = data.officers?.officerDisplayName ?? officerName;
             const masterName = data.officers?.masterName ?? null;
             const masterRank = data.officers?.masterRank ?? null;
+            const masterDisplayName = data.officers?.masterDisplayName ?? masterName;
 
             // Atualizar os dados na interface
-            $('#currentOfficer').text(formatDutyDisplay(officerName));
-            $('#currentMaster').text(formatDutyDisplay(masterName));
+            $('#currentOfficer').text(formatDutyDisplay(officerDisplayName, officerRank));
+            $('#currentMaster').text(formatDutyDisplay(masterDisplayName, masterRank));
             
             // Formatar data de atualização
             const updatedDate = data.officers?.updatedAt ? new Date(data.officers.updatedAt) : null;
             $('#lastUpdated').text(updatedDate ? updatedDate.toLocaleString('pt-BR') : '-');
             
             // Pré-selecionar os valores nos dropdowns, se disponíveis
-            if (data.officers?.officerName) {
-                selectOptionByValue('officerSelect', data.officers.officerName);
+            if (data.officers?.officerName || data.officers?.officerRank) {
+                selectOptionByValue('officerSelect', data.officers.officerName, data.officers.officerRank);
             }
 
-            if (data.officers?.masterName) {
-                selectOptionByValue('masterSelect', data.officers.masterName);
+            if (data.officers?.masterName || data.officers?.masterRank) {
+                selectOptionByValue('masterSelect', data.officers.masterName, data.officers.masterRank);
             }
         } else {
             $('#errorLoadingOfficers').removeClass('d-none');
@@ -667,8 +690,10 @@ function updateDutyOfficers() {
 
     const officerName = officerOption ? officerOption.value : '';
     const officerRank = officerOption ? officerOption.dataset.rank || null : null;
+    const officerSpecialty = officerOption ? officerOption.dataset.specialty || null : null;
     const masterName = masterOption ? masterOption.value : '';
     const masterRank = masterOption ? masterOption.dataset.rank || null : null;
+    const masterSpecialty = masterOption ? masterOption.dataset.specialty || null : null;
     
     // Verificar se pelo menos um oficial foi selecionado
     if (officerName === "" && masterName === "") {
@@ -683,8 +708,10 @@ function updateDutyOfficers() {
     const officerData = {
         officerName: officerName === "" ? null : officerName,
         officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+        officerSpecialty: officerSpecialty === null || officerSpecialty === '' ? null : officerSpecialty,
         masterName: masterName === "" ? null : masterName,
-        masterRank: masterRank === null || masterRank === '' ? null : masterRank
+        masterRank: masterRank === null || masterRank === '' ? null : masterRank,
+        masterSpecialty: masterSpecialty === null || masterSpecialty === '' ? null : masterSpecialty
     };
     
     // Usar o proxy PHP no mesmo domínio
@@ -731,22 +758,36 @@ function updateDutyOfficers() {
 }
 
 // Função para selecionar uma opção no dropdown pelo valor
-function selectOptionByValue(selectId, value) {
+function selectOptionByValue(selectId, value, rank = null) {
     const selectElement = document.getElementById(selectId);
     if (!selectElement) {
         return;
     }
 
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
+    const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
 
-    if (normalizedValue === '') {
+    if (normalizedValue === '' && normalizedRank === '') {
         $(selectElement).val('').trigger('change');
         return;
     }
 
     for (let i = 0; i < selectElement.options.length; i++) {
         const option = selectElement.options[i];
-        if (option.value === normalizedValue) {
+        const optionValue = option.value?.trim?.() ?? '';
+        const optionDisplay = option.dataset.display?.trim?.() ?? '';
+        const optionRawName = option.dataset.rawName?.trim?.() ?? '';
+        const optionRank = option.dataset.rank?.trim?.() ?? '';
+
+        const matchesValue = normalizedValue !== '' && (
+            optionValue === normalizedValue ||
+            optionDisplay === normalizedValue ||
+            optionRawName === normalizedValue
+        );
+
+        const matchesRank = normalizedRank !== '' && optionRank === normalizedRank;
+
+        if (matchesValue || matchesRank) {
             $(selectElement).val(option.value).trigger('change');
             return;
         }
