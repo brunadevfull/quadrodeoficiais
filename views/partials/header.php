@@ -32,6 +32,10 @@ try {
 
 $officerOptions = $officerOptions ?? [];
 $masterOptions = $masterOptions ?? [];
+
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+$dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/proxy-duty-officers.php';
 ?>
 
 <!DOCTYPE html>
@@ -570,6 +574,8 @@ $masterOptions = $masterOptions ?? [];
 </div>
 
 <script>
+const dutyOfficersApiUrl = <?php echo json_encode($dutyOfficersApiUrl, JSON_UNESCAPED_SLASHES); ?>;
+
 $(document).ready(function() {
     $('#dutyOfficersModal').on('shown.bs.modal', function() {
         loadCurrentDutyOfficers();
@@ -610,9 +616,7 @@ function loadCurrentDutyOfficers() {
     $('#errorLoadingOfficers').addClass('d-none');
     
     // Usar o proxy PHP no mesmo domínio
-    const apiUrl = '../../proxy-duty-officers.php';
-    
-    fetch(apiUrl, {
+    fetch(dutyOfficersApiUrl, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
@@ -707,10 +711,9 @@ function updateDutyOfficers() {
     };
     
     // Usar o proxy PHP no mesmo domínio
-    const apiUrl = '../../proxy-duty-officers.php';
-    
+
     // Enviar requisição para a API
-    fetch(apiUrl, {
+    fetch(dutyOfficersApiUrl, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
