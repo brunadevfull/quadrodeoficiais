@@ -2,6 +2,10 @@
 $officerOptions = $officerOptions ?? [];
 $masterOptions = $masterOptions ?? [];
 $personnelErrors = $personnelErrors ?? [];
+
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+$scriptDirectory = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+$dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/proxy-duty-officers.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -301,6 +305,8 @@ $personnelErrors = $personnelErrors ?? [];
     </div>
 
     <script>
+        const dutyOfficersApiUrl = <?php echo json_encode($dutyOfficersApiUrl, JSON_UNESCAPED_SLASHES); ?>;
+
         // JavaScript para comunicação com a API do Node.js
         document.addEventListener('DOMContentLoaded', function() {
             // Carregar oficiais de serviço atuais ao iniciar a página
@@ -324,9 +330,7 @@ $personnelErrors = $personnelErrors ?? [];
             document.getElementById('errorLoadingOfficers').classList.add('hidden');
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = '../../proxy-duty-officers.php';
-
-            fetch(apiUrl, {
+            fetch(dutyOfficersApiUrl, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -485,10 +489,8 @@ $personnelErrors = $personnelErrors ?? [];
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
-            const apiUrl = '../../proxy-duty-officers.php';
-
             // Enviar requisição para a API
-            fetch(apiUrl, {
+            fetch(dutyOfficersApiUrl, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
