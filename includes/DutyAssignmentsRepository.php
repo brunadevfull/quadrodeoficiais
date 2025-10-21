@@ -102,7 +102,7 @@ class DutyAssignmentsRepository
      */
     private function createConnectionFromEnv(): PDO
     {
-        $databaseUrl = getenv('DATABASE_URL') ?: 'postgresql://postgres:postgres123@localhost:5432/marinha_papem';
+        $databaseUrl = getenv('DATABASE_URL') ?: 'postgresql://postgres:suasenha123@localhost:5432/marinha_papem';
         $parts = parse_url($databaseUrl);
 
         if ($parts === false || !isset($parts['scheme'])) {
