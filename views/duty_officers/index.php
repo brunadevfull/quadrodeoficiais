@@ -323,8 +323,25 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
             });
         });
 
+        function clearDutyOfficerSelections() {
+            const officerSelect = document.getElementById('officerSelect');
+            const masterSelect = document.getElementById('masterSelect');
+
+            if (officerSelect) {
+                officerSelect.value = '';
+                officerSelect.dispatchEvent(new Event('change'));
+            }
+
+            if (masterSelect) {
+                masterSelect.value = '';
+                masterSelect.dispatchEvent(new Event('change'));
+            }
+        }
+
         // Função para carregar os oficiais de serviço atuais
-        function loadCurrentDutyOfficers() {
+        function loadCurrentDutyOfficers(options = {}) {
+            const shouldPreselect = options.preselect !== undefined ? Boolean(options.preselect) : true;
+
             document.getElementById('loadingCurrentOfficers').classList.remove('hidden');
             document.getElementById('officersDisplay').classList.add('hidden');
             document.getElementById('errorLoadingOfficers').classList.add('hidden');
@@ -366,11 +383,11 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                         updatedDate.toLocaleString('pt-BR') : '-';
                     
                     // Pré-selecionar os valores nos dropdowns, se disponíveis
-                    if (data.officers.officerName || data.officers.officerRank) {
+                    if (shouldPreselect && (data.officers.officerName || data.officers.officerRank)) {
                         selectOptionByValue('officerSelect', data.officers.officerName, data.officers.officerRank);
                     }
 
-                    if (data.officers.masterName || data.officers.masterRank) {
+                    if (shouldPreselect && (data.officers.masterName || data.officers.masterRank)) {
                         selectOptionByValue('masterSelect', data.officers.masterName, data.officers.masterRank);
                     }
                 } else {
@@ -466,10 +483,20 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
             const officerOption = officerSelect?.options[officerSelect.selectedIndex] ?? null;
             const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
 
-            const officerName = officerOption ? officerOption.value : '';
-            const officerRank = officerOption ? officerOption.dataset.rank || null : null;
-            const masterName = masterOption ? masterOption.value : '';
-            const masterRank = masterOption ? masterOption.dataset.rank || null : null;
+            const officerRawName = officerOption ? (officerOption.dataset.rawName || officerOption.value || '') : '';
+            const officerDisplayName = officerOption ? (officerOption.dataset.display || officerOption.text || '') : '';
+            const officerRank = officerOption
+                ? officerOption.dataset.rank || officerOption.dataset.shortRank || null
+                : null;
+
+            const masterRawName = masterOption ? (masterOption.dataset.rawName || masterOption.value || '') : '';
+            const masterDisplayName = masterOption ? (masterOption.dataset.display || masterOption.text || '') : '';
+            const masterRank = masterOption
+                ? masterOption.dataset.rank || masterOption.dataset.shortRank || null
+                : null;
+
+            const officerName = officerRawName;
+            const masterName = masterRawName;
 
             // Verificar se pelo menos um oficial foi selecionado
             if (officerName === "" && masterName === "") {
@@ -484,8 +511,10 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
             const officerData = {
                 officerName: officerName === "" ? null : officerName,
                 officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+                officerDisplayName: officerDisplayName === '' ? null : officerDisplayName,
                 masterName: masterName === "" ? null : masterName,
                 masterRank: masterRank === null || masterRank === '' ? null : masterRank,
+                masterDisplayName: masterDisplayName === '' ? null : masterDisplayName,
             };
             
             // Usar o proxy PHP no mesmo domínio para evitar problemas de CORS
@@ -511,7 +540,8 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                 if (data.success) {
                     // Atualização bem-sucedida, recarregar dados atuais
                     alert('Oficiais de serviço atualizados com sucesso!');
-                    loadCurrentDutyOfficers();
+                    loadCurrentDutyOfficers({ preselect: false });
+                    clearDutyOfficerSelections();
                 } else {
                     // Exibir mensagem de erro
                     document.getElementById('formError').textContent = data.error || 'Erro ao atualizar oficiais de serviço.';

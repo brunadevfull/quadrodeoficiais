@@ -586,6 +586,11 @@ $(document).ready(function() {
     });
 });
 
+function clearDutyOfficerSelections() {
+    $('#officerSelect').val('').trigger('change');
+    $('#masterSelect').val('').trigger('change');
+}
+
 function formatDutyDisplay(name, rank) {
     const normalizedName = typeof name === 'string' ? name.trim() : '';
     const normalizedRank = typeof rank === 'string' ? rank.trim() : '';
@@ -610,7 +615,9 @@ function formatDutyDisplay(name, rank) {
 }
 
 // Função para carregar os oficiais de serviço atuais
-function loadCurrentDutyOfficers() {
+function loadCurrentDutyOfficers(options = {}) {
+    const shouldPreselect = options.preselect !== undefined ? Boolean(options.preselect) : true;
+
     $('#loadingCurrentOfficers').removeClass('d-none');
     $('#officersDisplay').addClass('d-none');
     $('#errorLoadingOfficers').addClass('d-none');
@@ -651,11 +658,11 @@ function loadCurrentDutyOfficers() {
             $('#lastUpdated').text(updatedDate ? updatedDate.toLocaleString('pt-BR') : '-');
             
             // Pré-selecionar os valores nos dropdowns, se disponíveis
-            if (data.officers?.officerName || data.officers?.officerRank) {
+            if (shouldPreselect && (data.officers?.officerName || data.officers?.officerRank)) {
                 selectOptionByValue('officerSelect', data.officers.officerName, data.officers.officerRank);
             }
 
-            if (data.officers?.masterName || data.officers?.masterRank) {
+            if (shouldPreselect && (data.officers?.masterName || data.officers?.masterRank)) {
                 selectOptionByValue('masterSelect', data.officers.masterName, data.officers.masterRank);
             }
         } else {
@@ -688,10 +695,20 @@ function updateDutyOfficers() {
     const officerOption = officerSelect?.options[officerSelect.selectedIndex] ?? null;
     const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
 
-    const officerName = officerOption ? officerOption.value : '';
-    const officerRank = officerOption ? officerOption.dataset.rank || null : null;
-    const masterName = masterOption ? masterOption.value : '';
-    const masterRank = masterOption ? masterOption.dataset.rank || null : null;
+    const officerRawName = officerOption ? (officerOption.dataset.rawName || officerOption.value || '') : '';
+    const officerDisplayName = officerOption ? (officerOption.dataset.display || officerOption.text || '') : '';
+    const officerRank = officerOption
+        ? officerOption.dataset.rank || officerOption.dataset.shortRank || null
+        : null;
+
+    const masterRawName = masterOption ? (masterOption.dataset.rawName || masterOption.value || '') : '';
+    const masterDisplayName = masterOption ? (masterOption.dataset.display || masterOption.text || '') : '';
+    const masterRank = masterOption
+        ? masterOption.dataset.rank || masterOption.dataset.shortRank || null
+        : null;
+
+    const officerName = officerRawName;
+    const masterName = masterRawName;
     
     // Verificar se pelo menos um oficial foi selecionado
     if (officerName === "" && masterName === "") {
@@ -706,8 +723,10 @@ function updateDutyOfficers() {
     const officerData = {
         officerName: officerName === "" ? null : officerName,
         officerRank: officerRank === null || officerRank === '' ? null : officerRank,
+        officerDisplayName: officerDisplayName === '' ? null : officerDisplayName,
         masterName: masterName === "" ? null : masterName,
         masterRank: masterRank === null || masterRank === '' ? null : masterRank,
+        masterDisplayName: masterDisplayName === '' ? null : masterDisplayName,
     };
     
     // Usar o proxy PHP no mesmo domínio
@@ -734,9 +753,10 @@ function updateDutyOfficers() {
         if (data.success) {
             // Mostrar alerta de sucesso
             alert('Oficiais de serviço atualizados com sucesso!');
-            
-            // Atualização bem-sucedida, recarregar dados atuais
-            loadCurrentDutyOfficers();
+
+            // Atualização bem-sucedida, recarregar dados atuais (sem preencher os selects)
+            loadCurrentDutyOfficers({ preselect: false });
+            clearDutyOfficerSelections();
         } else {
             // Exibir mensagem de erro
             $('#formError').text(data.error || 'Erro ao atualizar oficiais de serviço.');
