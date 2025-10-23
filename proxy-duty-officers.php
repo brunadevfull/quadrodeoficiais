@@ -1,4 +1,7 @@
 <?php
+// Carregar variáveis de ambiente do .env
+require_once __DIR__ . '/includes/load_env.php';
+
 // Cabeçalhos para permitir CORS
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
