@@ -1,0 +1,26 @@
+# Variáveis de ambiente (contém senhas)
+.env
+
+# Arquivos de IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Cache
+cache/
+tmp/
+temp/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Composer
+vendor/
+composer.lock

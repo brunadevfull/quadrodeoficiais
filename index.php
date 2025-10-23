@@ -1,4 +1,7 @@
 <?php
+// Carregar variáveis de ambiente do .env
+require_once __DIR__ . '/includes/load_env.php';
+
 session_start();
 include 'config/config.php';
 include 'controllers/OficialController.php';
