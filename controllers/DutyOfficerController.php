@@ -24,22 +24,28 @@ class DutyOfficerController {
 
         $body_class = 'logged-in';
 
-        $personnelRepository = new MilitaryPersonnelRepository();
         $personnelErrors = [];
-
         $officerOptions = [];
         $masterOptions = [];
 
+        // Tenta usar banco externo, se falhar usa banco local
         try {
-            $officerOptions = $personnelRepository->getPersonnelOptions('officer');
-        } catch (Exception $exception) {
-            $personnelErrors[] = $exception->getMessage();
-        }
+            $personnelRepository = new MilitaryPersonnelRepository();
 
-        try {
-            $masterOptions = $personnelRepository->getPersonnelOptions('master');
+            try {
+                $officerOptions = $personnelRepository->getPersonnelOptions('officer');
+            } catch (Exception $exception) {
+                $personnelErrors[] = $exception->getMessage();
+            }
+
+            try {
+                $masterOptions = $personnelRepository->getPersonnelOptions('master');
+            } catch (Exception $exception) {
+                $personnelErrors[] = $exception->getMessage();
+            }
         } catch (Exception $exception) {
-            $personnelErrors[] = $exception->getMessage();
+            // Erro ao criar repositório (conexão com banco externo falhou)
+            $personnelErrors[] = 'Banco de dados externo não disponível. Usando dados locais.';
         }
 
         $needsOfficerFallback = empty($officerOptions);

@@ -12,10 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/includes/DutyAssignmentsRepository.php';
 
-$repository = new DutyAssignmentsRepository();
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 try {
+    $repository = new DutyAssignmentsRepository();
+
     switch (strtoupper($method)) {
         case 'GET':
             handleGet($repository);
@@ -33,12 +34,33 @@ try {
             break;
     }
 } catch (RuntimeException $exception) {
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'success' => false,
-        'error' => $exception->getMessage(),
-    ], JSON_UNESCAPED_UNICODE);
+    // Se não conseguiu conectar ao banco externo, retorna dados vazios
+    error_log("Erro ao conectar ao banco de oficiais de serviço: " . $exception->getMessage());
+
+    if (strtoupper($method) === 'GET') {
+        // Para GET, retorna estrutura vazia mas válida
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'officers' => [
+                'id' => null,
+                'officerName' => null,
+                'officerRank' => null,
+                'masterName' => null,
+                'masterRank' => null,
+                'validFrom' => null,
+                'updatedAt' => null,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    } else {
+        // Para PUT, retorna erro
+        http_response_code(500);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'error' => 'Banco de dados de oficiais de serviço não disponível. Verifique a configuração.',
+        ], JSON_UNESCAPED_UNICODE);
+    }
 }
 
 function handleGet(DutyAssignmentsRepository $repository): void

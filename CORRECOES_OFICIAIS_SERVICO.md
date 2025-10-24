@@ -138,12 +138,29 @@ Tabelas utilizadas:
 - `oficiais` - Quadro de oficiais da página principal
 - `postos` - Postos e patentes
 
-## Fallback para Banco Local (DutyOfficerController)
+## Fallback Automático para Banco Local
 
-Caso o banco `marinha_papem` não esteja disponível **apenas na funcionalidade de Gerenciar Oficiais de Serviço**, o sistema automaticamente:
-- Usa os dados da tabela `oficiais` do banco local `paginadeoficiais`
-- Filtra oficiais (posto com 'T') e mestres (posto com 'SG')
-- Exibe mensagem informativa sobre o uso de dados locais
+Caso o banco `marinha_papem` não esteja disponível, o sistema possui **fallback automático**:
+
+### No Carregamento da Página (DutyOfficerController):
+- ✅ Dropdowns de oficiais e mestres carregam do banco local
+- ✅ Usa tabela `oficiais` do banco `paginadeoficiais`
+- ✅ Filtra oficiais (posto com 'T') e mestres (posto com 'SG')
+- ✅ Exibe mensagem: "Banco de dados externo não disponível. Usando dados locais."
+
+### No Modal de Oficiais Atuais (proxy-duty-officers.php):
+- ✅ **GET**: Retorna estrutura vazia válida (sem erro)
+- ✅ Modal exibe "Não definido" ao invés de erro
+- ✅ Sistema continua funcionando normalmente
+- ❌ **PUT**: Retorna erro informativo ao tentar salvar sem banco externo
+
+### Comportamento Esperado SEM Banco Externo:
+1. **Página carrega normalmente** ✅
+2. **Dropdowns funcionam** com dados locais ✅
+3. **Modal não dá erro** (mostra "Não definido") ✅
+4. **Salvamento falha** com mensagem clara ❌
+
+**Solução**: Configure o banco `marinha_papem` para ter funcionalidade completa de salvamento.
 
 ## Arquivos Afetados
 
@@ -152,6 +169,9 @@ Caso o banco `marinha_papem` não esteja disponível **apenas na funcionalidade 
 - ✓ `includes/MilitaryPersonnelRepository.php` (MODIFICADO)
 - ✓ `DutyAssignmentsRepository.php` (MODIFICADO)
 - ✓ `controllers/OficialController.php` (MODIFICADO - Removido uso do banco externo)
+- ✓ `controllers/DutyOfficerController.php` (MODIFICADO - Melhorado fallback)
+- ✓ `proxy-duty-officers.php` (MODIFICADO - Adicionado fallback gracioso)
+- ✓ `views/duty_officers/proxy-duty-officers.php` (MODIFICADO - Adicionado fallback gracioso)
 - ✓ `test_connection.php` (NOVO)
 - ✓ `.env` (JÁ EXISTIA)
 - ✓ `CORRECOES_OFICIAIS_SERVICO.md` (NOVO - Este documento)
