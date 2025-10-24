@@ -33,11 +33,36 @@ try {
             break;
     }
 } catch (RuntimeException $exception) {
+    error_log("RuntimeException no proxy: " . $exception->getMessage());
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => $exception->getMessage(),
+    ], JSON_UNESCAPED_UNICODE);
+} catch (PDOException $exception) {
+    error_log("PDOException no proxy: " . $exception->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Erro de conexão com o banco de dados. Tente novamente.',
+    ], JSON_UNESCAPED_UNICODE);
+} catch (Exception $exception) {
+    error_log("Exception genérica no proxy: " . $exception->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Erro interno do servidor. Tente novamente mais tarde.',
+    ], JSON_UNESCAPED_UNICODE);
+} catch (Throwable $throwable) {
+    error_log("Throwable no proxy: " . $throwable->getMessage());
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Erro crítico no servidor. Contate o administrador.',
     ], JSON_UNESCAPED_UNICODE);
 }
 
