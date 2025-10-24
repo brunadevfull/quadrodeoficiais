@@ -7,6 +7,7 @@ O sistema estava apresentando erros ao gerenciar oficiais de serviço porque:
 1. **Variáveis de ambiente não eram carregadas**: O arquivo `.env` não estava sendo lido pelo PHP
 2. **Conexão com banco externo falhava**: Os repositórios tentavam conectar ao banco `marinha_papem` mas as credenciais não eram encontradas
 3. **Código duplicado desatualizado**: Havia versões desatualizadas dos repositórios na raiz do projeto
+4. **Escopo incorreto**: O `OficialController` estava tentando usar o banco externo quando deveria usar apenas o banco local
 
 ## Correções Realizadas
 
@@ -29,7 +30,19 @@ O sistema estava apresentando erros ao gerenciar oficiais de serviço porque:
 - Agora o `DATABASE_URL` é carregado corretamente do `.env`
 - Formatação correta de nomes e postos usando `MilitaryFormatter`
 
-### 3. Script de Teste
+### 3. Correção do Escopo de Uso
+
+**Arquivo**: `controllers/OficialController.php`
+
+**Problema**: O `OficialController` (página de gerenciar oficiais do quadro) estava tentando usar o banco externo `marinha_papem`
+
+**Correção**: Removido uso do `MilitaryPersonnelRepository` e configurado para usar **APENAS o banco local**
+
+**Escopo Correto**:
+- ✅ `DutyOfficerController` → USA banco externo (marinha_papem)
+- ✅ `OficialController` → USA banco local (paginadeoficiais)
+
+### 4. Script de Teste
 
 **Arquivo**: `test_connection.php`
 
@@ -109,9 +122,25 @@ CREATE TABLE military_personnel (
 - ✓ Exibição dos oficiais de serviço atuais funciona
 - Se não houver dados: "Nenhum registro encontrado no banco de militares. Exibindo dados locais."
 
-## Fallback para Banco Local
+## Escopo de Uso dos Bancos de Dados
 
-Caso o banco `marinha_papem` não esteja disponível, o sistema automaticamente:
+### Banco `marinha_papem` (Externo)
+**USADO APENAS PARA**: Gerenciar Oficiais de Serviço (`DutyOfficerController`)
+
+Tabelas utilizadas:
+- `duty_assignments` - Armazena qual oficial/mestre está de serviço
+- `military_personnel` - Lista de oficiais e mestres disponíveis para escala
+
+### Banco `paginadeoficiais` (Local)
+**USADO PARA**: Gerenciar Quadro de Oficiais (`OficialController`)
+
+Tabelas utilizadas:
+- `oficiais` - Quadro de oficiais da página principal
+- `postos` - Postos e patentes
+
+## Fallback para Banco Local (DutyOfficerController)
+
+Caso o banco `marinha_papem` não esteja disponível **apenas na funcionalidade de Gerenciar Oficiais de Serviço**, o sistema automaticamente:
 - Usa os dados da tabela `oficiais` do banco local `paginadeoficiais`
 - Filtra oficiais (posto com 'T') e mestres (posto com 'SG')
 - Exibe mensagem informativa sobre o uso de dados locais
@@ -122,8 +151,10 @@ Caso o banco `marinha_papem` não esteja disponível, o sistema automaticamente:
 - ✓ `includes/DutyAssignmentsRepository.php` (MODIFICADO)
 - ✓ `includes/MilitaryPersonnelRepository.php` (MODIFICADO)
 - ✓ `DutyAssignmentsRepository.php` (MODIFICADO)
+- ✓ `controllers/OficialController.php` (MODIFICADO - Removido uso do banco externo)
 - ✓ `test_connection.php` (NOVO)
 - ✓ `.env` (JÁ EXISTIA)
+- ✓ `CORRECOES_OFICIAIS_SERVICO.md` (NOVO - Este documento)
 
 ## Próximos Passos
 

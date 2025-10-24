@@ -2,7 +2,6 @@
 class OficialController {
     public function index() {
         include 'models/Oficial.php';
-        require_once 'includes/MilitaryPersonnelRepository.php';
 
         if (session_status() == PHP_SESSION_NONE) {
             session_start();
@@ -12,43 +11,12 @@ class OficialController {
         $is_logged_in = isset($_SESSION['user_id']);
         $body_class = $is_logged_in ? 'logged-in' : 'logged-out';
 
-        // Obtém os oficiais locais
+        // Obtém os oficiais locais - usa APENAS banco local, não o externo
         $oficiais = Oficial::all();
 
-        $personnelRepository = new MilitaryPersonnelRepository();
-
-        $personnelErrors = [];
-        $officerOptions = [];
-        $masterOptions = [];
-
-        try {
-            $officerOptions = $personnelRepository->getPersonnelOptions('officer');
-        } catch (Exception $exception) {
-            $personnelErrors[] = $exception->getMessage();
-        }
-
-        try {
-            $masterOptions = $personnelRepository->getPersonnelOptions('master');
-        } catch (Exception $exception) {
-            $personnelErrors[] = $exception->getMessage();
-        }
-
-        $needsOfficerFallback = empty($officerOptions);
-        $needsMasterFallback = empty($masterOptions);
-
-        if ($needsOfficerFallback || $needsMasterFallback) {
-            if ($needsOfficerFallback) {
-                $officerOptions = $this->buildFallbackOptions($oficiais, 'officer');
-            }
-
-            if ($needsMasterFallback) {
-                $masterOptions = $this->buildFallbackOptions($oficiais, 'master');
-            }
-
-            if (empty($personnelErrors)) {
-                $personnelErrors[] = 'Nenhum registro encontrado no banco de militares. Exibindo dados locais.';
-            }
-        }
+        // Gera opções de oficiais e mestres a partir do banco local
+        $officerOptions = $this->buildFallbackOptions($oficiais, 'officer');
+        $masterOptions = $this->buildFallbackOptions($oficiais, 'master');
 
         // Inclui a view e passa as variáveis necessárias
         include 'views/oficiais/index.php';
