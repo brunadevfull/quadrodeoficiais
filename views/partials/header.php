@@ -182,7 +182,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                         <p class="text-muted small">Última atualização: <span id="lastUpdated">-</span></p>
                     </div>
                     <div id="errorLoadingOfficers" class="alert alert-danger d-none">
-                        Erro ao carregar os oficiais de serviço atuais.
+                        <span id="errorLoadingOfficersMessage">Erro ao carregar os oficiais de serviço atuais.</span>
                     </div>
                 </div>
 
@@ -326,7 +326,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                         </div>
                     </div>
                     <div id="neoErrorLoadingOfficers" class="neo-alert neo-alert-danger d-none">
-                        Não foi possível carregar os oficiais de serviço. Tente novamente.
+                        <span id="neoErrorLoadingOfficersMessage">Não foi possível carregar os oficiais de serviço. Tente novamente.</span>
                     </div>
                 </div>
                 <form id="neoDutyOfficersForm" class="neo-duty-form">
@@ -720,6 +720,7 @@ const dutyModalConfigs = [
         loadingIndicator: '#loadingCurrentOfficers',
         displayContainer: '#officersDisplay',
         errorContainer: '#errorLoadingOfficers',
+        errorMessage: '#errorLoadingOfficersMessage',
         currentOfficer: '#currentOfficer',
         currentMaster: '#currentMaster',
         lastUpdated: '#lastUpdated',
@@ -734,6 +735,7 @@ const dutyModalConfigs = [
         loadingIndicator: '#neoLoadingCurrentOfficers',
         displayContainer: '#neoOfficersDisplay',
         errorContainer: '#neoErrorLoadingOfficers',
+        errorMessage: '#neoErrorLoadingOfficersMessage',
         currentOfficer: '#neoCurrentOfficer',
         currentMaster: '#neoCurrentMaster',
         lastUpdated: '#neoLastUpdated',
@@ -824,6 +826,7 @@ function loadCurrentDutyOfficers(config, options = {}) {
     const loadingElement = $(config.loadingIndicator);
     const displayElement = $(config.displayContainer);
     const errorElement = $(config.errorContainer);
+    const errorMessageElement = $(config.errorMessage);
 
     if (loadingElement.length) {
         loadingElement.removeClass('d-none');
@@ -843,9 +846,16 @@ function loadCurrentDutyOfficers(config, options = {}) {
         },
         credentials: 'same-origin'
     })
-    .then(response => {
+    .then(async response => {
         if (!response.ok) {
-            throw new Error('Erro ao carregar oficiais de serviço');
+            // Tenta obter a mensagem de erro do servidor
+            try {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Erro HTTP ${response.status}: ${response.statusText}`);
+            } catch (parseError) {
+                // Se não conseguir fazer parse do JSON, usa mensagem genérica
+                throw new Error(`Erro HTTP ${response.status}: ${response.statusText}`);
+            }
         }
         return response.json();
     })
@@ -857,6 +867,9 @@ function loadCurrentDutyOfficers(config, options = {}) {
         if (data.success) {
             if (displayElement.length) {
                 displayElement.removeClass('d-none');
+            }
+            if (errorElement.length) {
+                errorElement.addClass('d-none');
             }
 
             const officerName = data.officers?.officerName ?? null;
@@ -891,8 +904,14 @@ function loadCurrentDutyOfficers(config, options = {}) {
                 selectOptionByValue(config.masterSelect, data.officers.masterName, data.officers.masterRank);
             }
         } else {
+            if (displayElement.length) {
+                displayElement.addClass('d-none');
+            }
             if (errorElement.length) {
                 errorElement.removeClass('d-none');
+            }
+            if (errorMessageElement.length) {
+                errorMessageElement.text(data.error || 'Erro ao carregar dados dos oficiais de serviço.');
             }
             console.error('Erro ao carregar dados:', data.error);
         }
@@ -901,8 +920,14 @@ function loadCurrentDutyOfficers(config, options = {}) {
         if (loadingElement.length) {
             loadingElement.addClass('d-none');
         }
+        if (displayElement.length) {
+            displayElement.addClass('d-none');
+        }
         if (errorElement.length) {
             errorElement.removeClass('d-none');
+        }
+        if (errorMessageElement.length) {
+            errorMessageElement.text(error.message || 'Erro na comunicação com o servidor. Tente novamente.');
         }
         console.error('Erro na requisição:', error);
     });
