@@ -868,6 +868,9 @@ function loadCurrentDutyOfficers(config, options = {}) {
             if (displayElement.length) {
                 displayElement.removeClass('d-none');
             }
+            if (errorElement.length) {
+                errorElement.addClass('d-none');
+            }
 
             const officerName = data.officers?.officerName ?? null;
             const officerRank = data.officers?.officerRank ?? null;
@@ -901,6 +904,9 @@ function loadCurrentDutyOfficers(config, options = {}) {
                 selectOptionByValue(config.masterSelect, data.officers.masterName, data.officers.masterRank);
             }
         } else {
+            if (displayElement.length) {
+                displayElement.addClass('d-none');
+            }
             if (errorElement.length) {
                 errorElement.removeClass('d-none');
             }
@@ -913,6 +919,9 @@ function loadCurrentDutyOfficers(config, options = {}) {
     .catch(error => {
         if (loadingElement.length) {
             loadingElement.addClass('d-none');
+        }
+        if (displayElement.length) {
+            displayElement.addClass('d-none');
         }
         if (errorElement.length) {
             errorElement.removeClass('d-none');
