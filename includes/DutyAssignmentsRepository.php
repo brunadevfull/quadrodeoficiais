@@ -1,6 +1,5 @@
 <?php
 
-require_once __DIR__ . '/load_env.php';
 require_once __DIR__ . '/MilitaryFormatter.php';
 
 class DutyAssignmentsRepository
