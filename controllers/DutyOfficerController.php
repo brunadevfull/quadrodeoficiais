@@ -70,6 +70,16 @@ class DutyOfficerController {
         $options = [];
 
         foreach ($oficiais as $oficial) {
+            $postoId = strtoupper((string)($oficial['posto_id'] ?? ''));
+
+            if ($type === 'officer' && strpos($postoId, 'T') === false) {
+                continue;
+            }
+
+            if ($type === 'master' && strpos($postoId, 'SG') === false) {
+                continue;
+            }
+
             $name = $oficial['nome'] ?? '';
 
             if (empty($name)) {
