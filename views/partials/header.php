@@ -109,6 +109,9 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
         <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
             Gerenciar Oficiais de Serviço
         </button>
+        <button class="aurora-button" data-toggle="modal" data-target="#dutyOfficersModalAurora">
+            Gerenciar Oficiais de Serviço (Novo Visual)
+        </button>
     <?php endif; ?>
 
     <!-- Botão de Logout -->
@@ -284,6 +287,142 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                     <span id="updateSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     Atualizar Oficiais de Serviço
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="dutyOfficersModalAurora" tabindex="-1" role="dialog" aria-labelledby="dutyOfficersModalAuroraLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+        <div class="modal-content neo-duty-modal">
+            <div class="neo-modal-hero">
+                <div>
+                    <h5 class="neo-modal-title" id="dutyOfficersModalAuroraLabel">Painel Dinâmico de Oficiais</h5>
+                    <p class="neo-modal-subtitle">Atualize os responsáveis pelo serviço com uma experiência moderna.</p>
+                </div>
+                <button type="button" class="neo-close-button" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="neo-modal-body">
+                <div class="neo-status-area">
+                    <div id="neoLoadingCurrentOfficers" class="neo-loading-state">
+                        <div class="spinner-border text-light" role="status">
+                            <span class="sr-only">Carregando...</span>
+                        </div>
+                        <span>Carregando dados atuais...</span>
+                    </div>
+                    <div id="neoOfficersDisplay" class="neo-status-grid d-none">
+                        <div class="neo-status-card">
+                            <span class="neo-status-label">Oficial de Serviço Atual</span>
+                            <strong id="neoCurrentOfficer">Não definido</strong>
+                        </div>
+                        <div class="neo-status-card">
+                            <span class="neo-status-label">Contramestre de Serviço</span>
+                            <strong id="neoCurrentMaster">Não definido</strong>
+                        </div>
+                        <div class="neo-status-card neo-status-card--compact">
+                            <span class="neo-status-label">Última atualização</span>
+                            <time id="neoLastUpdated">-</time>
+                        </div>
+                    </div>
+                    <div id="neoErrorLoadingOfficers" class="neo-alert neo-alert-danger d-none">
+                        Não foi possível carregar os oficiais de serviço. Tente novamente.
+                    </div>
+                </div>
+                <form id="neoDutyOfficersForm" class="neo-duty-form">
+                    <div class="neo-field-group">
+                        <label for="neoOfficerSelect">Novo Oficial de Serviço</label>
+                        <div class="neo-select-wrapper">
+                            <select class="form-control neo-select" id="neoOfficerSelect" name="officerName">
+                                <option value="">Selecione um Oficial</option>
+                                <?php if (!empty($officerOptions)): ?>
+                                    <?php foreach ($officerOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? '';
+                                            $optionName = $option['name'] ?? '';
+                                            $optionRankDisplay = $option['rank'] ?? '';
+                                            $optionShortRank = $option['short_rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'officer';
+                                            $optionDisplay = $option['display'] ?? '';
+
+                                            if ($optionDisplay === '') {
+                                                $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
+                                            }
+
+                                            if ($optionValue === '') {
+                                                $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
+                                            }
+
+                                            if ($optionValue === '' || $optionDisplay === '') {
+                                                continue;
+                                            }
+                                        ?>
+                                        <option
+                                            value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
+                                        >
+                                            <?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="neo-field-group">
+                        <label for="neoMasterSelect">Novo Contramestre de Serviço</label>
+                        <div class="neo-select-wrapper">
+                            <select class="form-control neo-select" id="neoMasterSelect" name="masterName">
+                                <option value="">Selecione um Contramestre</option>
+                                <?php if (!empty($masterOptions)): ?>
+                                    <?php foreach ($masterOptions as $option): ?>
+                                        <?php
+                                            $optionValue = $option['value'] ?? '';
+                                            $optionName = $option['name'] ?? '';
+                                            $optionRankDisplay = $option['rank'] ?? '';
+                                            $optionShortRank = $option['short_rank'] ?? '';
+                                            $optionType = $option['type'] ?? 'master';
+                                            $optionDisplay = $option['display'] ?? '';
+
+                                            if ($optionDisplay === '') {
+                                                $optionDisplay = trim(($optionRankDisplay ? $optionRankDisplay . ' ' : '') . $optionName);
+                                            }
+
+                                            if ($optionValue === '') {
+                                                $optionValue = $optionName !== '' ? $optionName : $optionDisplay;
+                                            }
+
+                                            if ($optionValue === '' || $optionDisplay === '') {
+                                                continue;
+                                            }
+                                        ?>
+                                        <option
+                                            value="<?php echo htmlspecialchars($optionValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-rank="<?php echo htmlspecialchars($optionRankDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-short-rank="<?php echo htmlspecialchars($optionShortRank, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-type="<?php echo htmlspecialchars($optionType, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-display="<?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-raw-name="<?php echo htmlspecialchars($optionName, ENT_QUOTES, 'UTF-8'); ?>"
+                                        >
+                                            <?php echo htmlspecialchars($optionDisplay, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="neoFormError" class="neo-alert neo-alert-danger d-none"></div>
+                    <div class="neo-modal-actions">
+                        <button type="button" class="neo-secondary-button" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="neo-primary-button" id="neoUpdateOfficersButton">
+                            <span id="neoUpdateSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            Atualizar Designação
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -575,20 +714,80 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
 
 <script>
 const dutyOfficersApiUrl = <?php echo json_encode($dutyOfficersApiUrl, JSON_UNESCAPED_SLASHES); ?>;
+const dutyModalConfigs = [
+    {
+        modalSelector: '#dutyOfficersModal',
+        loadingIndicator: '#loadingCurrentOfficers',
+        displayContainer: '#officersDisplay',
+        errorContainer: '#errorLoadingOfficers',
+        currentOfficer: '#currentOfficer',
+        currentMaster: '#currentMaster',
+        lastUpdated: '#lastUpdated',
+        officerSelect: '#officerSelect',
+        masterSelect: '#masterSelect',
+        formError: '#formError',
+        updateButton: '#updateOfficersButton',
+        updateSpinner: '#updateSpinner'
+    },
+    {
+        modalSelector: '#dutyOfficersModalAurora',
+        loadingIndicator: '#neoLoadingCurrentOfficers',
+        displayContainer: '#neoOfficersDisplay',
+        errorContainer: '#neoErrorLoadingOfficers',
+        currentOfficer: '#neoCurrentOfficer',
+        currentMaster: '#neoCurrentMaster',
+        lastUpdated: '#neoLastUpdated',
+        officerSelect: '#neoOfficerSelect',
+        masterSelect: '#neoMasterSelect',
+        formError: '#neoFormError',
+        updateButton: '#neoUpdateOfficersButton',
+        updateSpinner: '#neoUpdateSpinner'
+    }
+];
+let activeDutyModalConfigs = [];
 
 $(document).ready(function() {
-    $('#dutyOfficersModal').on('shown.bs.modal', function() {
-        loadCurrentDutyOfficers();
-    });
+    activeDutyModalConfigs = dutyModalConfigs.filter(config => document.querySelector(config.modalSelector));
 
-    $('#updateOfficersButton').on('click', function() {
-        updateDutyOfficers();
+    activeDutyModalConfigs.forEach(config => {
+        $(config.modalSelector).on('shown.bs.modal', function() {
+            loadCurrentDutyOfficers(config);
+        });
+
+        $(config.updateButton).on('click', function() {
+            updateDutyOfficers(config);
+        });
     });
 });
 
-function clearDutyOfficerSelections() {
-    $('#officerSelect').val('').trigger('change');
-    $('#masterSelect').val('').trigger('change');
+function resolveElement(reference) {
+    if (!reference) {
+        return null;
+    }
+
+    if (typeof Element !== 'undefined' && reference instanceof Element) {
+        return reference;
+    }
+
+    if (typeof reference === 'string') {
+        const selector = reference.startsWith('#') || reference.startsWith('.') ? reference : `#${reference}`;
+        return document.querySelector(selector);
+    }
+
+    return null;
+}
+
+function clearDutyOfficerSelections(config) {
+    const officerSelectElement = resolveElement(config?.officerSelect);
+    const masterSelectElement = resolveElement(config?.masterSelect);
+
+    if (officerSelectElement) {
+        $(officerSelectElement).val('').trigger('change');
+    }
+
+    if (masterSelectElement) {
+        $(masterSelectElement).val('').trigger('change');
+    }
 }
 
 function formatDutyDisplay(name, rank) {
@@ -615,13 +814,27 @@ function formatDutyDisplay(name, rank) {
 }
 
 // Função para carregar os oficiais de serviço atuais
-function loadCurrentDutyOfficers(options = {}) {
+function loadCurrentDutyOfficers(config, options = {}) {
+    if (!config) {
+        return;
+    }
+
     const shouldPreselect = options.preselect !== undefined ? Boolean(options.preselect) : true;
 
-    $('#loadingCurrentOfficers').removeClass('d-none');
-    $('#officersDisplay').addClass('d-none');
-    $('#errorLoadingOfficers').addClass('d-none');
-    
+    const loadingElement = $(config.loadingIndicator);
+    const displayElement = $(config.displayContainer);
+    const errorElement = $(config.errorContainer);
+
+    if (loadingElement.length) {
+        loadingElement.removeClass('d-none');
+    }
+    if (displayElement.length) {
+        displayElement.addClass('d-none');
+    }
+    if (errorElement.length) {
+        errorElement.addClass('d-none');
+    }
+
     // Usar o proxy PHP no mesmo domínio
     fetch(dutyOfficersApiUrl, {
         method: 'GET',
@@ -637,10 +850,14 @@ function loadCurrentDutyOfficers(options = {}) {
         return response.json();
     })
     .then(data => {
-        $('#loadingCurrentOfficers').addClass('d-none');
-        
+        if (loadingElement.length) {
+            loadingElement.addClass('d-none');
+        }
+
         if (data.success) {
-            $('#officersDisplay').removeClass('d-none');
+            if (displayElement.length) {
+                displayElement.removeClass('d-none');
+            }
 
             const officerName = data.officers?.officerName ?? null;
             const officerRank = data.officers?.officerRank ?? null;
@@ -649,51 +866,81 @@ function loadCurrentDutyOfficers(options = {}) {
             const masterRank = data.officers?.masterRank ?? null;
             const masterDisplayName = data.officers?.masterDisplayName ?? masterName;
 
-            // Atualizar os dados na interface
-            $('#currentOfficer').text(formatDutyDisplay(officerDisplayName, officerRank));
-            $('#currentMaster').text(formatDutyDisplay(masterDisplayName, masterRank));
-            
-            // Formatar data de atualização
-            const updatedDate = data.officers?.updatedAt ? new Date(data.officers.updatedAt) : null;
-            $('#lastUpdated').text(updatedDate ? updatedDate.toLocaleString('pt-BR') : '-');
-            
-            // Pré-selecionar os valores nos dropdowns, se disponíveis
+            const currentOfficerElement = $(config.currentOfficer);
+            const currentMasterElement = $(config.currentMaster);
+            const lastUpdatedElement = $(config.lastUpdated);
+
+            if (currentOfficerElement.length) {
+                currentOfficerElement.text(formatDutyDisplay(officerDisplayName, officerRank));
+            }
+
+            if (currentMasterElement.length) {
+                currentMasterElement.text(formatDutyDisplay(masterDisplayName, masterRank));
+            }
+
+            if (lastUpdatedElement.length) {
+                const updatedDate = data.officers?.updatedAt ? new Date(data.officers.updatedAt) : null;
+                lastUpdatedElement.text(updatedDate ? updatedDate.toLocaleString('pt-BR') : '-');
+            }
+
             if (shouldPreselect && (data.officers?.officerName || data.officers?.officerRank)) {
-                selectOptionByValue('officerSelect', data.officers.officerName, data.officers.officerRank);
+                selectOptionByValue(config.officerSelect, data.officers.officerName, data.officers.officerRank);
             }
 
             if (shouldPreselect && (data.officers?.masterName || data.officers?.masterRank)) {
-                selectOptionByValue('masterSelect', data.officers.masterName, data.officers.masterRank);
+                selectOptionByValue(config.masterSelect, data.officers.masterName, data.officers.masterRank);
             }
         } else {
-            $('#errorLoadingOfficers').removeClass('d-none');
+            if (errorElement.length) {
+                errorElement.removeClass('d-none');
+            }
             console.error('Erro ao carregar dados:', data.error);
         }
     })
     .catch(error => {
-        $('#loadingCurrentOfficers').addClass('d-none');
-        $('#errorLoadingOfficers').removeClass('d-none');
+        if (loadingElement.length) {
+            loadingElement.addClass('d-none');
+        }
+        if (errorElement.length) {
+            errorElement.removeClass('d-none');
+        }
         console.error('Erro na requisição:', error);
     });
 }
 
-// Função para atualizar os oficiais de serviço
-function updateDutyOfficers() {
-    // Limpar mensagens de erro anteriores
-    $('#formError').addClass('d-none');
-    
-    // Mostrar spinner de carregamento
-    const updateButton = $('#updateOfficersButton');
-    const updateSpinner = $('#updateSpinner');
-    updateButton.prop('disabled', true);
-    updateSpinner.removeClass('d-none');
-    
-    // Obter valores dos campos
-    const officerSelect = document.getElementById('officerSelect');
-    const masterSelect = document.getElementById('masterSelect');
+function refreshDutyOfficerModals(options = {}) {
+    activeDutyModalConfigs.forEach(config => {
+        loadCurrentDutyOfficers(config, options);
+    });
+}
 
-    const officerOption = officerSelect?.options[officerSelect.selectedIndex] ?? null;
-    const masterOption = masterSelect?.options[masterSelect.selectedIndex] ?? null;
+// Função para atualizar os oficiais de serviço
+function updateDutyOfficers(config) {
+    if (!config) {
+        return;
+    }
+
+    const formError = $(config.formError);
+    const updateButton = $(config.updateButton);
+    const updateSpinner = $(config.updateSpinner);
+
+    if (formError.length) {
+        formError.text('');
+        formError.addClass('d-none');
+    }
+
+    if (updateButton.length) {
+        updateButton.prop('disabled', true);
+    }
+    if (updateSpinner.length) {
+        updateSpinner.removeClass('d-none');
+    }
+
+    const officerSelectElement = resolveElement(config.officerSelect);
+    const masterSelectElement = resolveElement(config.masterSelect);
+
+    const officerOption = officerSelectElement?.options[officerSelectElement.selectedIndex] ?? null;
+    const masterOption = masterSelectElement?.options[masterSelectElement.selectedIndex] ?? null;
 
     const officerRawName = officerOption ? (officerOption.dataset.rawName || officerOption.value || '') : '';
     const officerDisplayName = officerOption ? (officerOption.dataset.display || officerOption.text || '') : '';
@@ -709,17 +956,21 @@ function updateDutyOfficers() {
 
     const officerName = officerRawName;
     const masterName = masterRawName;
-    
-    // Verificar se pelo menos um oficial foi selecionado
+
     if (officerName === "" && masterName === "") {
-        $('#formError').text('Selecione pelo menos um oficial de serviço.');
-        $('#formError').removeClass('d-none');
-        updateButton.prop('disabled', false);
-        updateSpinner.addClass('d-none');
+        if (formError.length) {
+            formError.text('Selecione pelo menos um oficial de serviço.');
+            formError.removeClass('d-none');
+        }
+        if (updateButton.length) {
+            updateButton.prop('disabled', false);
+        }
+        if (updateSpinner.length) {
+            updateSpinner.addClass('d-none');
+        }
         return;
     }
 
-    // Preparar dados para envio
     const officerData = {
         officerName: officerName === "" ? null : officerName,
         officerRank: officerRank === null || officerRank === '' ? null : officerRank,
@@ -728,10 +979,7 @@ function updateDutyOfficers() {
         masterRank: masterRank === null || masterRank === '' ? null : masterRank,
         masterDisplayName: masterDisplayName === '' ? null : masterDisplayName,
     };
-    
-    // Usar o proxy PHP no mesmo domínio
 
-    // Enviar requisição para a API
     fetch(dutyOfficersApiUrl, {
         method: 'PUT',
         headers: {
@@ -747,34 +995,42 @@ function updateDutyOfficers() {
         return response.json();
     })
     .then(data => {
-        updateButton.prop('disabled', false);
-        updateSpinner.addClass('d-none');
-        
-        if (data.success) {
-            // Mostrar alerta de sucesso
-            alert('Oficiais de serviço atualizados com sucesso!');
+        if (updateButton.length) {
+            updateButton.prop('disabled', false);
+        }
+        if (updateSpinner.length) {
+            updateSpinner.addClass('d-none');
+        }
 
-            // Atualização bem-sucedida, recarregar dados atuais (sem preencher os selects)
-            loadCurrentDutyOfficers({ preselect: false });
-            clearDutyOfficerSelections();
+        if (data.success) {
+            alert('Oficiais de serviço atualizados com sucesso!');
+            refreshDutyOfficerModals({ preselect: false });
+            clearDutyOfficerSelections(config);
         } else {
-            // Exibir mensagem de erro
-            $('#formError').text(data.error || 'Erro ao atualizar oficiais de serviço.');
-            $('#formError').removeClass('d-none');
+            if (formError.length) {
+                formError.text(data.error || 'Erro ao atualizar oficiais de serviço.');
+                formError.removeClass('d-none');
+            }
         }
     })
     .catch(error => {
-        updateButton.prop('disabled', false);
-        updateSpinner.addClass('d-none');
-        $('#formError').text('Erro na comunicação com o servidor. Tente novamente.');
-        $('#formError').removeClass('d-none');
+        if (updateButton.length) {
+            updateButton.prop('disabled', false);
+        }
+        if (updateSpinner.length) {
+            updateSpinner.addClass('d-none');
+        }
+        if (formError.length) {
+            formError.text('Erro na comunicação com o servidor. Tente novamente.');
+            formError.removeClass('d-none');
+        }
         console.error('Erro na requisição:', error);
     });
 }
 
 // Função para selecionar uma opção no dropdown pelo valor
-function selectOptionByValue(selectId, value, rank = null) {
-    const selectElement = document.getElementById(selectId);
+function selectOptionByValue(selectReference, value, rank = null) {
+    const selectElement = resolveElement(selectReference);
     if (!selectElement) {
         return;
     }
