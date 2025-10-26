@@ -1,0 +1,34 @@
+## 1. Rotas expostas em `index.php` e controladores acionados
+- `GET /index.php` (ou `GET /index.php?route=oficiais`) instância `OficialController::index()`, que garante sessão ativa, verifica `$_SESSION['user_id']`, prepara a classe CSS do `<body>` e gera opções de oficiais/contramestres via fallback local antes de carregar `views/oficiais/index.php`. Variáveis derivadas dessa rota são usadas posteriormente por `views/partials/header.php` e pela view principal, que também depende de `$_SESSION['is_admin']`, `$_SESSION['username']`, `$_SESSION['user_add_error']`, `$_SESSION['error']`, entre outras, para controlar modais e comportamento da página.
+
+- `GET /index.php?route=duty-officers` instância `DutyOfficerController::index()`, exige autenticação (`$_SESSION['user_id']`) e checa privilégio administrativo ou usuário `EOR` (`$_SESSION['is_admin']`, `$_SESSION['username']`). Ele tenta carregar dados de militares de um repositório externo; falhas geram mensagens em `$personnelErrors` e disparam fallback para os registros locais de `Oficial::all()`. A view `views/duty_officers/index.php` consome `$officerOptions`, `$masterOptions`, `$personnelErrors` e `dutyOfficersApiUrl` para montar os formulários e o fluxo AJAX de integração com a API Node.js via `proxy-duty-officers.php`.
+
+- Ações auxiliares do `OficialController` são expostas por arquivos em `views/` usados como endpoints de formulário/AJAX: `process_add_official.php` chama `add()` com `$_POST` e redireciona; `process_edit_official.php` valida sessão antes de acionar `edit()`; `remove_official.php` delega a `remove()`. Todos exigem sessão e reutilizam o mesmo controlador carregado em `index.php`. O AJAX de presença chama `views/update_status_file.php`, que valida `$_SESSION['user_id']` antes de atualizar um cache JSON por oficial.
+
+## 2. Operações de `models/Oficial.php` e repositórios em `includes/`
+- `Oficial::all()` consulta o banco local (PostgreSQL configurado em `config/config.php`) trazendo ID, nome, posto, imagem, status e localização dos oficiais, ordenando por `localizacao`. `add()` insere um novo oficial reajustando posições via `UPDATE`/`INSERT` dentro de transação; `edit()` atualiza atributos básicos; `remove()` apaga o registro, recalcula posições subsequentes e trata exceções com rollback. Todos assumem o `PDO` global inicializado pelo bootstrap.
+
+- `MilitaryPersonnelRepository` cria conexão PostgreSQL a partir de `DATABASE_URL` (ou padrão local) usando `load_env.php`, consulta `military_personnel` filtrando por `type`, normaliza nomes/postos com `MilitaryFormatter`, evita duplicados por chave derivada e ordena alfabeticamente. Qualquer falha de consulta ou conexão gera `RuntimeException`, o que dispara o fallback no controlador para dados locais.
+
+- `DutyAssignmentsRepository` acessa a tabela `duty_assignments` do banco externo (mesma resolução de `DATABASE_URL`) para ler o registro vigente (`getCurrentAssignment`) e criar novas escalas (`createAssignment`). Ambos normalizam dados com `MilitaryFormatter`, convertem datas para UTC ISO-8601 e retornam `null` ou lançam exceções em caso de falhas, permitindo ao proxy e às views reagirem com mensagens ou dados vazios. O método `createAssignment` aceita `DateTimeInterface`, strings ou `null` e define fallback para o horário atual em UTC.
+
+- `MilitaryFormatter` padroniza rank, nome e especialidade (uppercase, remoção de parênteses duplicados) e monta `display` (`rank + nome`), garantindo consistência tanto para opções locais quanto externas.
+
+- `load_env.php` carrega pares `KEY=VALUE` do `.env`, definindo variáveis de ambiente para os repositórios externos apenas quando ainda não estiverem setadas.
+
+- `TemperatureUtils` (usado pelas views do quadro) prioriza um cache de 30 minutos e tenta duas APIs externas (`wttr.in` e `Open-Meteo`) antes de aplicar fallback estático; ele também traduz descrições de clima para português e persiste os dados em `cache/temperature_cache.json`. Essas informações alimentam componentes como o badge de temperatura exibido na view principal.
+
+- `SunsetSystemDB` (embora fora de `includes/`, consumido junto com os repositórios) expõe métodos para obter o pôr do sol atual, semana e outras métricas a partir da tabela `chm_horarios`, usando fallback padrão “18:00” em erros — dado relevante para o badge na UI.
+
+## 3. Consumo dos dados nas views (`views/`)
+- `views/oficiais/index.php` injeta os arrays de opções (`$officerOptions`, `$masterOptions`) no cabeçalho, inicializa o `SunsetSystemDB`, lê o arquivo de status temporário por oficial e usa `$_SESSION` para abrir modais de sucesso/erro. A tabela principal é construída com `$oficiais`, gerando colunas (com botões extras para administradores) e toggles que enviam atualizações via AJAX para `views/update_status_file.php`. O JavaScript também expõe `userIsAuthenticated` para bloquear ações de usuários anônimos.
+
+- `views/partials/header.php` reutiliza `$officerOptions`/`$masterOptions` para preencher o modal “Gerenciar Oficiais de Serviço”, mostra formulários administrativos condicionados a `$_SESSION['is_admin']` e controla permissões para quem pode abrir o modal (`$can_manage_duty_officers`). Ele também contém a implementação jQuery dos mesmos fluxos AJAX de leitura/escrita usados na view dedicada, reforçando a integração com o proxy PHP/Node.
+
+- `views/duty_officers/index.php` oferece uma tela completa apenas para gestão de oficiais de serviço. Usa as mesmas coleções de opções, lista erros de carregamento e fornece funções JavaScript (`loadCurrentDutyOfficers`, `selectOptionByValue`, `updateDutyOfficers`) que comunicam-se com `proxy-duty-officers.php` (GET/PUT) para espelhar os dados no backend Node.js, incluindo pré-seleção dos dropdowns e tratamento de retorno da API.
+
+- `views/update_status_file.php` funciona como endpoint AJAX protegido por sessão para persistir status “a bordo/terra” em um arquivo JSON, recurso utilizado pelos toggles renderizados em `views/oficiais/index.php`. Ele garante locking (`flock`) para evitar corrupção e devolve mensagens de sucesso ou erro que o front-end usa para feedback imediato.
+
+- Scripts de processamento (`process_add_official.php`, `process_edit_official.php`, `remove_official.php`) encapsulam a chamada aos métodos do controlador, propagando erros via `$_SESSION` ou resposta direta, e fazem parte do fluxo de formulários dos modais “Adicionar/Editar” dentro da view principal.
+
+Essas referências cobrem onde cada dado é lido ou escrito (tabelas locais, repositórios externos e arquivos de cache) e como as views interagem com eles via formulários, modais e chamadas AJAX, servindo como guia para replicar a lógica na migração/integração com Node.js.
