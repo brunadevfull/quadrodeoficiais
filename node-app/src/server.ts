@@ -25,7 +25,7 @@ app.use(express.static(staticDir));
 
 app.use('/api', router);
 
-app.get('*', (req: Request, res: Response, next: NextFunction) => {
+app.get('/*', (req: Request, res: Response, next: NextFunction) => {
   if (req.method !== 'GET' || req.path.startsWith('/api')) {
     next();
     return;
