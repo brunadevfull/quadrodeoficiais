@@ -1,24 +1,35 @@
 #!/bin/bash
+set -euo pipefail
 
-# Nome do banco e do novo usuário com boas práticas
-DB_NAME="paginadeoficiais"
-DB_USER="pagoficial_rw"
-DB_PASSWORD="Papem_RW@2024"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_CONFIG_FILE="$SCRIPT_DIR/config/migration.env"
+CONFIG_FILE="${CONFIG_FILE:-$DEFAULT_CONFIG_FILE}"
 
-# Diretório onde salvar os backups
-BACKUP_DIR="/backup/db"
+if [[ -f "$CONFIG_FILE" ]]; then
+  # shellcheck disable=SC1090
+  set -a
+  source "$CONFIG_FILE"
+  set +a
+fi
+
+DB_NAME="${DB_NAME:-paginadeoficiais}"
+DB_USER="${DB_USER:-pagoficial_rw}"
+DB_PASSWORD="${DB_PASSWORD:-Papem_RW@2024}"
+DB_HOST="${DB_HOST:-localhost}"
+BACKUP_DIR="${BACKUP_DIR:-/backup/db}"
+
+if [[ -z "${DB_PASSWORD}" ]]; then
+  echo "❌ Variável DB_PASSWORD não definida." >&2
+  exit 1
+fi
+
 mkdir -p "$BACKUP_DIR"
 
-# Nome do arquivo com data e hora
-DATA=$(date +%Y%m%d_%H%M%S)
-ARQUIVO_BACKUP="$BACKUP_DIR/backup_${DB_NAME}_$DATA.sql"
+TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
+BACKUP_FILE="$BACKUP_DIR/backup_${DB_NAME}_${TIMESTAMP}.sql"
 
-# Executar o backup com pg_dump usando a senha correta
-PGPASSWORD="$DB_PASSWORD" pg_dump -U "$DB_USER" -h localhost "$DB_NAME" > "$ARQUIVO_BACKUP"
+echo "➡️  Gerando backup do banco '$DB_NAME' em '$BACKUP_FILE'..."
+PGPASSWORD="$DB_PASSWORD" pg_dump -U "$DB_USER" -h "$DB_HOST" "$DB_NAME" > "$BACKUP_FILE"
 
-# Verificar se deu certo
-if [ $? -eq 0 ]; then
-  echo "✅ Backup realizado com sucesso: $ARQUIVO_BACKUP"
-else
-  echo "❌ Erro ao realizar o backup!"
-fi
+echo "✅ Backup realizado com sucesso: $BACKUP_FILE"
+echo "$BACKUP_FILE"
