@@ -1,4 +1,5 @@
-import { RequestHandler } from 'express';
+import type { Request, RequestHandler } from 'express';
+import type { Session } from 'express-session';
 import bcrypt from 'bcrypt';
 import { sessionCookieName } from '../config/session';
 import { logger } from '../config/logger';
@@ -19,7 +20,7 @@ const normalizeString = (value: unknown): string | null => {
   return trimmed === '' ? null : trimmed;
 };
 
-const extractClientIp = (req: Parameters<RequestHandler>[0]): string | null => {
+const extractClientIp = (req: Request): string | null => {
   const forwarded = req.headers['x-forwarded-for'];
 
   if (Array.isArray(forwarded)) {
@@ -30,11 +31,16 @@ const extractClientIp = (req: Parameters<RequestHandler>[0]): string | null => {
     return forwarded.split(',')[0].trim();
   }
 
-  return req.ip ?? req.socket.remoteAddress ?? null;
+  return req.ip ?? req.socket?.remoteAddress ?? null;
 };
 
-const regenerateSession = (req: Parameters<RequestHandler>[0]): Promise<void> => {
+const regenerateSession = (req: Request): Promise<void> => {
   return new Promise((resolve, reject) => {
+    if (!req.session) {
+      reject(new Error('Sessão não configurada.'));
+      return;
+    }
+
     req.session.regenerate((error) => {
       if (error) {
         reject(error);
@@ -46,8 +52,13 @@ const regenerateSession = (req: Parameters<RequestHandler>[0]): Promise<void> =>
   });
 };
 
-const saveSession = (req: Parameters<RequestHandler>[0]): Promise<void> => {
+const saveSession = (req: Request): Promise<void> => {
   return new Promise((resolve, reject) => {
+    if (!req.session) {
+      reject(new Error('Sessão não configurada.'));
+      return;
+    }
+
     req.session.save((error) => {
       if (error) {
         reject(error);
@@ -87,11 +98,18 @@ export const loginController: RequestHandler = async (req, res) => {
 
     await regenerateSession(req);
 
-    req.session.userId = user.id;
-    req.session.user_id = user.id;
-    req.session.username = user.username;
-    req.session.isAdmin = user.isAdmin;
-    req.session.is_admin = user.isAdmin;
+    const session = req.session as Session | undefined;
+
+    if (!session) {
+      res.status(500).json({ success: false, error: 'Sessão não disponível.' });
+      return;
+    }
+
+    session.userId = user.id;
+    session.user_id = user.id;
+    session.username = user.username;
+    session.isAdmin = user.isAdmin;
+    session.is_admin = user.isAdmin;
 
     const clientIp = extractClientIp(req);
     await recordLoginAudit({ userId: user.id, username: user.username, clientIp });

@@ -65,7 +65,7 @@ const hasSunsetPassed = (sunsetTime: string): boolean => {
 
 export const getSunsetTimeForDate = async (date: string): Promise<string> => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       'SELECT por_do_sol FROM chm_horarios WHERE data = $1 LIMIT 1',
       [date]
     );
@@ -94,7 +94,7 @@ export const getSunsetInfo = async (date?: string): Promise<SunsetInfo> => {
   const targetDate = date ?? new Date().toISOString().slice(0, 10);
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       `
         SELECT data, por_do_sol, fonte, observacoes
           FROM chm_horarios
@@ -149,7 +149,7 @@ export const getSunsetInfo = async (date?: string): Promise<SunsetInfo> => {
 
 export const getWeekSunsetTimes = async (): Promise<WeekSunsetRecord[]> => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       `
         SELECT data, por_do_sol, fonte
           FROM chm_horarios
@@ -159,7 +159,7 @@ export const getWeekSunsetTimes = async (): Promise<WeekSunsetRecord[]> => {
       `
     );
 
-    return rows.map((row) => ({
+    return rows.map((row: Record<string, unknown>) => ({
       data: String(row.data),
       por_do_sol: stripSeconds(toNullableString(row.por_do_sol) ?? DEFAULT_SUNSET),
       fonte: safeString(row.fonte),
@@ -173,7 +173,7 @@ export const getWeekSunsetTimes = async (): Promise<WeekSunsetRecord[]> => {
 
 export const getJavaScriptData = async (): Promise<string> => {
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       `
         SELECT data, por_do_sol
           FROM chm_horarios
@@ -182,7 +182,7 @@ export const getJavaScriptData = async (): Promise<string> => {
       `
     );
 
-    const entries = rows.map((row) => [
+    const entries = rows.map((row: Record<string, unknown>) => [
       String(row.data),
       stripSeconds(toNullableString(row.por_do_sol) ?? DEFAULT_SUNSET)
     ] as const);
@@ -196,7 +196,9 @@ export const getJavaScriptData = async (): Promise<string> => {
 
 export const getDebugInfo = async (): Promise<unknown> => {
   try {
-    const countResult = await pool.query('SELECT COUNT(*)::int AS total FROM chm_horarios');
+    const countResult = await pool.query<Record<string, unknown>>(
+      'SELECT COUNT(*)::int AS total FROM chm_horarios'
+    );
     const totalRecords = Number(countResult.rows[0]?.total ?? 0);
     const todayDate = new Date().toISOString().slice(0, 10);
     const todaySunset = await getSunsetTimeForDate(todayDate);

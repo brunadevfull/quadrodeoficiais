@@ -1,4 +1,5 @@
 import { getExternalPool } from '../config/externalDatabase';
+import { createErrorWithCause } from '../utils/errors';
 import {
   buildDisplayName,
   buildRankWithSpecialty,
@@ -103,12 +104,12 @@ export const getPersonnelOptions = async (
   let rows: Record<string, unknown>[];
 
   try {
-    const result = await pool.query('SELECT * FROM military_personnel WHERE type = $1', [
+    const result = await pool.query<Record<string, unknown>>('SELECT * FROM military_personnel WHERE type = $1', [
       trimmedType
     ]);
     rows = result.rows;
   } catch (error) {
-    throw new Error('Falha ao consultar militares no banco de dados.', { cause: error });
+    throw createErrorWithCause('Falha ao consultar militares no banco de dados.', error);
   }
 
   const optionsMap = new Map<string, PersonnelOption>();

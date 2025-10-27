@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import type { RequestHandler, Response } from 'express';
 import { logger } from '../config/logger';
 import {
   addOfficer,
@@ -12,7 +12,7 @@ const isValidationError = (error: unknown): boolean => {
 };
 
 const respondWithOfficerError = (
-  res: Parameters<RequestHandler>[1],
+  res: Response,
   error: unknown,
   fallbackMessage: string
 ) => {
