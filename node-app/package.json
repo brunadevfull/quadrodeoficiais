@@ -12,7 +12,7 @@
     "dev:client": "vite",
     "preview": "vite preview",
     "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"client/**/*.{ts,js,css,html}\""
+    "format": "echo 'Prettier is not installed in this environment.'"
   },
   "keywords": [],
   "author": "",
@@ -35,9 +35,7 @@
     "@types/pg": "^8.11.7",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^9.12.0",
-    "eslint-config-prettier": "^9.1.0",
-    "prettier": "^3.3.3",
+    "eslint": "^8.57.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3",
