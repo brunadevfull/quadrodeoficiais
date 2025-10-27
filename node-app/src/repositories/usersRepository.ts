@@ -14,6 +14,16 @@ const mapUserRow = (row: Record<string, unknown>): UserRecord => ({
   isAdmin: Boolean(row.is_admin ?? row.isAdmin ?? false)
 });
 
+export const findUserByUsername = async (username: string): Promise<UserRecord | null> => {
+  const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return mapUserRow(rows[0]);
+};
+
 export const getAdminById = async (id: number): Promise<UserRecord | null> => {
   const { rows } = await pool.query('SELECT * FROM users WHERE id = $1 AND is_admin = TRUE', [id]);
 
