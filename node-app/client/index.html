@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quadro de Oficiais</title>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <h1>Quadro de Oficiais</h1>
+        <p class="subtitle">Painel administrativo</p>
+      </div>
+      <div class="header-actions">
+        <button id="refreshButton" class="button secondary">Atualizar dados</button>
+        <button id="addOfficerButton" class="button primary">Adicionar oficial</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section id="dutySection" class="panel">
+        <div class="panel-header">
+          <h2>Oficiais de Serviço</h2>
+          <p class="panel-subtitle">
+            Defina o oficial de serviço e o contramestre exibidos no sistema principal.
+          </p>
+        </div>
+        <form id="dutyForm" class="form-grid" autocomplete="off">
+          <div class="form-control">
+            <label for="dutyOfficerSelect">Oficial de Serviço</label>
+            <select id="dutyOfficerSelect" name="dutyOfficer">
+              <option value="">Selecione</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="dutyMasterSelect">Contramestre</label>
+            <select id="dutyMasterSelect" name="dutyMaster">
+              <option value="">Selecione</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="button primary">Salvar</button>
+            <button type="button" id="clearDutyButton" class="button tertiary">Limpar seleção</button>
+          </div>
+        </form>
+        <div class="duty-summary">
+          <p><strong>Oficial atual:</strong> <span id="dutyOfficerDisplay">-</span></p>
+          <p><strong>Contramestre:</strong> <span id="dutyMasterDisplay">-</span></p>
+          <p class="muted">Atualizado em <span id="dutyUpdatedAt">-</span></p>
+        </div>
+      </section>
+
+      <section id="officersSection" class="panel">
+        <div class="panel-header">
+          <h2>Oficiais</h2>
+          <p class="panel-subtitle">Gerencie presença, cadastro e edição dos oficiais.</p>
+        </div>
+        <div id="appMessage" class="message hidden" role="alert"></div>
+        <div id="loadingIndicator" class="loading hidden">Carregando dados...</div>
+        <div id="officerGrid" class="officer-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true"></div>
+    <div
+      id="officerModal"
+      class="modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="officerModalTitle"
+    >
+      <form id="officerForm" class="modal-content" autocomplete="off">
+        <header class="modal-header">
+          <h2 id="officerModalTitle">Adicionar oficial</h2>
+          <button type="button" id="closeModalButton" class="modal-close" aria-label="Fechar">×</button>
+        </header>
+        <div class="modal-body">
+          <input type="hidden" id="officerId" name="id" />
+          <div class="form-control">
+            <label for="officerName">Nome</label>
+            <input type="text" id="officerName" name="nome" required />
+          </div>
+          <div class="form-control">
+            <label for="officerPost">Posto</label>
+            <select id="officerPost" name="postoId" required>
+              <option value="">Selecione um posto</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="officerStatus">Status</label>
+            <select id="officerStatus" name="status" required>
+              <option value="bordo">A bordo</option>
+              <option value="terra">Em terra</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label for="officerLocation">Posição no painel</label>
+            <input
+              type="number"
+              id="officerLocation"
+              name="localizacao"
+              min="1"
+              step="1"
+              required
+            />
+          </div>
+          <p id="modalHint" class="muted modal-hint">
+            Utilize a posição para controlar a ordem de exibição na tela principal.
+          </p>
+          <p id="modalError" class="form-error" aria-live="assertive"></p>
+        </div>
+        <footer class="modal-footer">
+          <button type="button" id="cancelModalButton" class="button tertiary">Cancelar</button>
+          <button type="submit" class="button primary">Salvar</button>
+        </footer>
+      </form>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
