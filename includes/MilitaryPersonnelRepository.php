@@ -2,19 +2,27 @@
 
 require_once __DIR__ . '/load_env.php';
 require_once __DIR__ . '/MilitaryFormatter.php';
+require_once __DIR__ . '/ExternalApiClient.php';
 
 class MilitaryPersonnelRepository
 {
-    private PDO $pdo;
+    private ?PDO $pdo = null;
+    private ?ExternalApiClient $apiClient = null;
+    private string $personnelEndpoint = '/api/military-personnel';
 
-    public function __construct(?PDO $pdo = null)
+    public function __construct(?PDO $pdo = null, ?ExternalApiClient $apiClient = null, ?string $personnelEndpoint = null)
     {
-        if ($pdo !== null) {
-            $this->pdo = $pdo;
-            return;
+        if ($personnelEndpoint !== null) {
+            $this->personnelEndpoint = $personnelEndpoint;
         }
 
-        $this->pdo = $this->createConnectionFromEnv();
+        $this->initializeApiClient($apiClient);
+
+        if ($this->apiClient === null) {
+            $this->pdo = $pdo ?? $this->createConnectionFromEnv();
+        } else {
+            $this->pdo = $pdo; // mantido apenas para compatibilidade com testes legados
+        }
     }
 
     /**
@@ -28,14 +36,10 @@ class MilitaryPersonnelRepository
             throw new InvalidArgumentException('Tipo de militar inválido informado.');
         }
 
-        try {
-            $statement = $this->pdo->prepare(
-                'SELECT * FROM military_personnel WHERE type = :type'
-            );
-            $statement->execute([':type' => $type]);
-            $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $exception) {
-            throw new RuntimeException('Falha ao consultar militares no banco de dados.', 0, $exception);
+        if ($this->apiClient !== null) {
+            $rows = $this->fetchFromApi($type);
+        } else {
+            $rows = $this->fetchFromDatabase($type);
         }
 
         $options = [];
@@ -76,6 +80,57 @@ class MilitaryPersonnelRepository
         });
 
         return $options;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    private function fetchFromApi(string $type): array
+    {
+        if ($this->apiClient === null) {
+            return [];
+        }
+
+        $response = $this->apiClient->get($this->personnelEndpoint, ['type' => $type]);
+
+        if (isset($response['success']) && $response['success'] === false) {
+            $message = isset($response['error']) ? (string)$response['error'] : 'API de militares retornou erro.';
+            throw new RuntimeException($message);
+        }
+
+        if (isset($response['error']) && !isset($response['success'])) {
+            throw new RuntimeException((string)$response['error']);
+        }
+
+        $records = $this->extractRecordsFromApi($response);
+
+        if (!is_array($records)) {
+            throw new RuntimeException('Resposta da API de militares não contém uma lista de registros.');
+        }
+
+        return $records;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    private function fetchFromDatabase(string $type): array
+    {
+        if (!$this->pdo instanceof PDO) {
+            throw new RuntimeException('Conexão com banco de militares não inicializada.');
+        }
+
+        try {
+            $statement = $this->pdo->prepare(
+                'SELECT * FROM military_personnel WHERE type = :type'
+            );
+            $statement->execute([':type' => $type]);
+            $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $exception) {
+            throw new RuntimeException('Falha ao consultar militares no banco de dados.', 0, $exception);
+        }
+
+        return $rows;
     }
 
     /**
@@ -164,5 +219,90 @@ class MilitaryPersonnelRepository
         }, $keyParts);
 
         return implode('|', $normalizedParts);
+    }
+
+    private function initializeApiClient(?ExternalApiClient $client): void
+    {
+        if ($client instanceof ExternalApiClient) {
+            $this->apiClient = $client;
+            return;
+        }
+
+        $endpointFromEnv = getenv('MILITARY_PERSONNEL_API_URL') ?: '';
+        $baseUrlFromEnv = getenv('EXTERNAL_API_BASE_URL') ?: '';
+
+        if ($endpointFromEnv !== '') {
+            if (preg_match('#^https?://#i', $endpointFromEnv)) {
+                $this->apiClient = $this->createClientFromAbsoluteUrl($endpointFromEnv);
+                return;
+            }
+
+            $this->personnelEndpoint = $endpointFromEnv;
+        }
+
+        if ($baseUrlFromEnv !== '') {
+            $this->apiClient = new ExternalApiClient($baseUrlFromEnv);
+        }
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    private function createClientFromAbsoluteUrl(string $url): ExternalApiClient
+    {
+        $parts = parse_url($url);
+
+        if ($parts === false || !isset($parts['scheme'], $parts['host'])) {
+            throw new RuntimeException('URL de API externa inválida: ' . $url);
+        }
+
+        $base = $parts['scheme'] . '://' . $parts['host'];
+
+        if (isset($parts['port'])) {
+            $base .= ':' . $parts['port'];
+        }
+
+        $path = $parts['path'] ?? '/';
+        $query = isset($parts['query']) && $parts['query'] !== '' ? '?' . $parts['query'] : '';
+
+        $this->personnelEndpoint = ($path === '' ? '/' : $path) . $query;
+
+        return new ExternalApiClient($base);
+    }
+
+    private function extractRecordsFromApi(array $response): array
+    {
+        foreach (['data', 'items', 'results', 'personnel', 'records'] as $key) {
+            if (isset($response[$key]) && is_array($response[$key])) {
+                return $response[$key];
+            }
+        }
+
+        if ($this->isList($response)) {
+            return $response;
+        }
+
+        if (empty($response)) {
+            return [];
+        }
+
+        if (isset($response['success']) && $response['success'] === true) {
+            return [];
+        }
+
+        if (isset($response['error'])) {
+            throw new RuntimeException((string)$response['error']);
+        }
+
+        throw new RuntimeException('Formato da resposta da API de militares é desconhecido.');
+    }
+
+    private function isList(array $value): bool
+    {
+        if (function_exists('array_is_list')) {
+            return array_is_list($value);
+        }
+
+        return array_keys($value) === range(0, count($value) - 1);
     }
 }
