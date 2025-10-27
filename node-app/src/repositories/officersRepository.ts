@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../config/database';
+import { createErrorWithCause } from '../utils/errors';
 
 export interface OfficerRecord {
   id: number;
@@ -69,7 +70,7 @@ export const getAllOfficers = async (): Promise<OfficerRecord[]> => {
   ORDER BY o.localizacao
   `;
 
-  const { rows } = await pool.query(query);
+  const { rows } = await pool.query<Record<string, unknown>>(query);
   return rows.map((row) => mapOfficerRow(row));
 };
 
@@ -113,7 +114,7 @@ export const addOfficer = async (payload: CreateOfficerInput): Promise<void> => 
     await commitTransaction(client);
   } catch (error) {
     await rollbackTransaction(client);
-    throw new Error('Falha ao adicionar oficial.', { cause: error });
+    throw createErrorWithCause('Falha ao adicionar oficial.', error);
   }
 };
 
@@ -137,7 +138,7 @@ export const updateOfficer = async (payload: UpdateOfficerInput): Promise<void> 
     await commitTransaction(client);
   } catch (error) {
     await rollbackTransaction(client);
-    throw new Error('Falha ao editar oficial.', { cause: error });
+    throw createErrorWithCause('Falha ao editar oficial.', error);
   }
 };
 
@@ -145,7 +146,10 @@ export const removeOfficer = async (id: number): Promise<void> => {
   const client = await beginTransaction();
 
   try {
-    const { rows } = await client.query('SELECT localizacao FROM oficiais WHERE id = $1', [id]);
+    const { rows } = await client.query<Record<string, unknown>>(
+      'SELECT localizacao FROM oficiais WHERE id = $1',
+      [id]
+    );
     const localizacao = rows[0]?.localizacao;
 
     await client.query('DELETE FROM oficiais WHERE id = $1', [id]);
@@ -159,6 +163,6 @@ export const removeOfficer = async (id: number): Promise<void> => {
     await commitTransaction(client);
   } catch (error) {
     await rollbackTransaction(client);
-    throw new Error('Falha ao remover oficial.', { cause: error });
+    throw createErrorWithCause('Falha ao remover oficial.', error);
   }
 };

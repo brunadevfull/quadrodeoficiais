@@ -1,3 +1,5 @@
+import type { Session } from 'express-session';
+
 const parseNumericId = (value: unknown): number | null => {
   if (typeof value === 'number') {
     return Number.isInteger(value) && value > 0 ? value : null;
@@ -34,7 +36,7 @@ const parseBoolean = (value: unknown): boolean => {
   return false;
 };
 
-const getSessionUserId = (session: Express.Session | undefined): number | null => {
+const getSessionUserId = (session: Session | undefined): number | null => {
   if (!session) {
     return null;
   }
@@ -42,7 +44,7 @@ const getSessionUserId = (session: Express.Session | undefined): number | null =
   return parseNumericId(session.userId ?? session.user_id ?? null);
 };
 
-const getSessionUsername = (session: Express.Session | undefined): string | null => {
+const getSessionUsername = (session: Session | undefined): string | null => {
   if (!session) {
     return null;
   }
@@ -57,7 +59,7 @@ const getSessionUsername = (session: Express.Session | undefined): string | null
   return trimmed === '' ? null : trimmed;
 };
 
-const isSessionAdmin = (session: Express.Session | undefined): boolean => {
+const isSessionAdmin = (session: Session | undefined): boolean => {
   if (!session) {
     return false;
   }
@@ -66,3 +68,4 @@ const isSessionAdmin = (session: Express.Session | undefined): boolean => {
 };
 
 export { getSessionUserId, getSessionUsername, isSessionAdmin };
+

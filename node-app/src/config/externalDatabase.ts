@@ -1,5 +1,6 @@
 import { Pool, PoolConfig } from 'pg';
 import { env } from './env';
+import { createErrorWithCause } from '../utils/errors';
 
 const DEFAULT_EXTERNAL_DATABASE_URL =
   'postgresql://postgres:suasenha123@localhost:5432/marinha_papem';
@@ -17,7 +18,7 @@ const validateDatabaseUrl = (rawUrl: string | undefined): string => {
   try {
     parsed = new URL(candidate);
   } catch (error) {
-    throw new Error('DATABASE_URL inválida ou ausente.', { cause: error });
+    throw createErrorWithCause('DATABASE_URL inválida ou ausente.', error);
   }
 
   if (!isPostgresProtocol(parsed.protocol)) {

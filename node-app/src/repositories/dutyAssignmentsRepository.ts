@@ -4,6 +4,7 @@ import {
   formatName,
   formatRank
 } from '../utils/militaryFormatter';
+import { createErrorWithCause } from '../utils/errors';
 
 type NullableString = string | null;
 
@@ -130,7 +131,7 @@ export const getCurrentAssignment = async (): Promise<DutyAssignmentRecord | nul
   const pool = getExternalPool();
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       `
         SELECT id,
                officer_name,
@@ -151,7 +152,7 @@ export const getCurrentAssignment = async (): Promise<DutyAssignmentRecord | nul
 
     return normalizeAssignment(rows[0]);
   } catch (error) {
-    throw new Error('Falha ao consultar oficiais de serviço.', { cause: error });
+    throw createErrorWithCause('Falha ao consultar oficiais de serviço.', error);
   }
 };
 
@@ -184,7 +185,7 @@ export const createAssignment = async (
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await pool.query<Record<string, unknown>>(
       `
         INSERT INTO duty_assignments (officer_name, officer_rank, master_name, master_rank, valid_from)
         VALUES ($1, $2, $3, $4, $5)
@@ -217,6 +218,6 @@ export const createAssignment = async (
       throw error;
     }
 
-    throw new Error('Falha ao salvar oficiais de serviço.', { cause: error });
+    throw createErrorWithCause('Falha ao salvar oficiais de serviço.', error);
   }
 };

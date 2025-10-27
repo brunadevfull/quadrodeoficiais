@@ -1,5 +1,5 @@
 import connectPgSimple from 'connect-pg-simple';
-import session from 'express-session';
+import session, { SessionOptions } from 'express-session';
 import { pool } from './database';
 import { env } from './env';
 
@@ -7,7 +7,7 @@ const PgSession = connectPgSimple(session);
 
 export const sessionCookieName = 'PHPSESSID';
 
-export const sessionConfig: session.SessionOptions = {
+export const sessionConfig: SessionOptions = {
   store: new PgSession({
     pool,
     tableName: 'sessions',

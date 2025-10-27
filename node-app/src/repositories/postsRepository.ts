@@ -7,11 +7,11 @@ export interface PostRecord {
 }
 
 export const getAllPosts = async (): Promise<PostRecord[]> => {
-  const { rows } = await pool.query(
+  const { rows } = await pool.query<Record<string, unknown>>(
     'SELECT id, descricao, imagem FROM postos ORDER BY descricao'
   );
 
-  return rows.map((row) => ({
+  return rows.map((row: Record<string, unknown>) => ({
     id: Number(row.id),
     descricao: String(row.descricao ?? ''),
     imagem: row.imagem === null || row.imagem === undefined ? null : String(row.imagem)
