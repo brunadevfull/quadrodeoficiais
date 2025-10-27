@@ -11,12 +11,34 @@ echo "=== TESTE DE CONEXÃO - BANCO MARINHA_PAPEM ===\n\n";
 // Carrega variáveis de ambiente
 require_once __DIR__ . '/includes/load_env.php';
 
-echo "1. Verificando variável DATABASE_URL...\n";
+echo "1. Variáveis de integração...\n";
 $databaseUrl = getenv('DATABASE_URL');
+$externalApiBase = getenv('EXTERNAL_API_BASE_URL');
+$dutyAssignmentsApi = getenv('DUTY_ASSIGNMENTS_API_URL');
+$personnelApi = getenv('MILITARY_PERSONNEL_API_URL');
+
+if ($externalApiBase) {
+    echo "   ✓ EXTERNAL_API_BASE_URL: " . $externalApiBase . "\n";
+} else {
+    echo "   ℹ EXTERNAL_API_BASE_URL não definida (será usada URL completa por endpoint ou conexão direta ao banco).\n";
+}
+
+if ($dutyAssignmentsApi) {
+    echo "   ✓ DUTY_ASSIGNMENTS_API_URL: " . $dutyAssignmentsApi . "\n";
+} else {
+    echo "   ℹ DUTY_ASSIGNMENTS_API_URL não definida.\n";
+}
+
+if ($personnelApi) {
+    echo "   ✓ MILITARY_PERSONNEL_API_URL: " . $personnelApi . "\n";
+} else {
+    echo "   ℹ MILITARY_PERSONNEL_API_URL não definida.\n";
+}
+
 if ($databaseUrl) {
     echo "   ✓ DATABASE_URL carregada: " . $databaseUrl . "\n\n";
 } else {
-    echo "   ✗ DATABASE_URL não encontrada!\n\n";
+    echo "   ℹ DATABASE_URL não encontrada (repositórios usarão apenas APIs externas).\n\n";
 }
 
 // Testa DutyAssignmentsRepository

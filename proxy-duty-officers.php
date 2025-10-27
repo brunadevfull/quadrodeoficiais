@@ -58,7 +58,7 @@ try {
         header('Content-Type: application/json');
         echo json_encode([
             'success' => false,
-            'error' => 'Banco de dados de oficiais de serviço não disponível. Verifique a configuração.',
+            'error' => 'Integração de oficiais de serviço não disponível. Verifique a API configurada.',
         ], JSON_UNESCAPED_UNICODE);
     }
 }
