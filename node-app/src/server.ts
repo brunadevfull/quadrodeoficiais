@@ -1,6 +1,8 @@
+import path from 'path';
 import express from 'express';
 import helmet from 'helmet';
 import session from 'express-session';
+import type { NextFunction, Request, Response } from 'express';
 import { env } from './config/env';
 import { logger } from './config/logger';
 import { sessionConfig } from './config/session';
@@ -17,11 +19,20 @@ app.use(express.json());
 app.use(requestLogger);
 app.use(session(sessionConfig));
 
-app.get('/', (_req, res) => {
-  res.json({ status: 'running' });
-});
+const staticDir = path.join(__dirname, '..', 'public');
+
+app.use(express.static(staticDir));
 
 app.use('/api', router);
+
+app.get('*', (req: Request, res: Response, next: NextFunction) => {
+  if (req.method !== 'GET' || req.path.startsWith('/api')) {
+    next();
+    return;
+  }
+
+  res.sendFile(path.join(staticDir, 'index.html'));
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);

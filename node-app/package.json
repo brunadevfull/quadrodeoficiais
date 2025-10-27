@@ -4,11 +4,15 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vite build",
+    "build:server": "tsc",
+    "build:client": "vite build",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev:client": "vite",
+    "preview": "vite preview",
     "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier --write \"src/**/*.{ts,js,json}\""
+    "format": "prettier --write \"src/**/*.{ts,js,json}\" \"client/**/*.{ts,js,css,html}\""
   },
   "keywords": [],
   "author": "",
@@ -36,6 +40,7 @@
     "prettier": "^3.3.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vite": "^5.4.3"
   }
 }
