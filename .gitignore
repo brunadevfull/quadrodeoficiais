@@ -1,0 +1,4 @@
+config/migration.env
+node_modules/
+node-app/node_modules/
+vendor/
