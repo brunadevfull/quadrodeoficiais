@@ -208,8 +208,8 @@ updateDateTime();
         $('#editOfficialModal').modal('show');
         $('#edit_id').val(id);
         $('#edit_nome').val(nome);
-        $('#edit_posto').val(posto_id);
-        $('#edit_status').val(status);
+        $('#edit_posto').val(''); // Deixa dropdown sem seleção inicial
+        $('#edit_status').val(''); // Deixa dropdown sem seleção inicial
         $('#edit_localizacao').val(localizacao);
     }
 
