@@ -407,8 +407,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
             const selectElement = document.getElementById(selectId);
 
             if (!selectElement) {
-                console.warn('selectOptionByValue: Elemento select não encontrado', selectId);
-                return false;
+                return;
             }
 
             const normalizedValue = typeof value === 'string' ? value.trim() : '';
@@ -417,28 +416,9 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
             if (normalizedValue === '' && normalizedRank === '') {
                 selectElement.value = '';
                 selectElement.dispatchEvent(new Event('change'));
-                return true;
+                return;
             }
 
-            // Primeiro, tenta match exato com nome e posto
-            for (let i = 0; i < selectElement.options.length; i++) {
-                const option = selectElement.options[i];
-                const optionValue = option.value?.trim?.() ?? '';
-                const optionDisplay = option.dataset.display?.trim?.() ?? '';
-                const optionRawName = option.dataset.rawName?.trim?.() ?? '';
-                const optionRank = option.dataset.rank?.trim?.() ?? '';
-
-                // Match exato de nome E posto
-                if (normalizedValue !== '' && normalizedRank !== '' &&
-                    optionRawName === normalizedValue && optionRank === normalizedRank) {
-                    selectElement.selectedIndex = i;
-                    selectElement.dispatchEvent(new Event('change'));
-                    console.log('selectOptionByValue: Match exato encontrado (nome + posto)', optionDisplay);
-                    return true;
-                }
-            }
-
-            // Se não encontrou match exato, tenta match por nome OU posto
             for (let i = 0; i < selectElement.options.length; i++) {
                 const option = selectElement.options[i];
                 const optionValue = option.value?.trim?.() ?? '';
@@ -457,34 +437,9 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                 if (matchesValue || matchesRank) {
                     selectElement.selectedIndex = i;
                     selectElement.dispatchEvent(new Event('change'));
-                    console.log('selectOptionByValue: Match parcial encontrado', optionDisplay);
-                    return true;
+                    break;
                 }
             }
-
-            // Se não encontrou, cria uma nova opção dinamicamente
-            if (normalizedValue !== '' || normalizedRank !== '') {
-                const displayText = normalizedRank && normalizedValue
-                    ? `${normalizedRank} ${normalizedValue}`
-                    : (normalizedRank || normalizedValue);
-
-                const newOption = document.createElement('option');
-                newOption.value = normalizedValue;
-                newOption.text = displayText;
-                newOption.selected = true;
-                newOption.dataset.rank = normalizedRank;
-                newOption.dataset.rawName = normalizedValue;
-                newOption.dataset.display = displayText;
-
-                selectElement.add(newOption);
-                selectElement.dispatchEvent(new Event('change'));
-
-                console.log('selectOptionByValue: Opção criada dinamicamente', displayText);
-                return true;
-            }
-
-            console.warn('selectOptionByValue: Nenhum match encontrado para', { value: normalizedValue, rank: normalizedRank });
-            return false;
         }
 
         function formatDutyDisplay(name, rank) {
