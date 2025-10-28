@@ -1057,7 +1057,8 @@ function updateDutyOfficers(config) {
 function selectOptionByValue(selectReference, value, rank = null) {
     const selectElement = resolveElement(selectReference);
     if (!selectElement) {
-        return;
+        console.warn('selectOptionByValue: Elemento select não encontrado', selectReference);
+        return false;
     }
 
     const normalizedValue = typeof value === 'string' ? value.trim() : '';
@@ -1065,9 +1066,27 @@ function selectOptionByValue(selectReference, value, rank = null) {
 
     if (normalizedValue === '' && normalizedRank === '') {
         $(selectElement).val('').trigger('change');
-        return;
+        return true;
     }
 
+    // Primeiro, tenta match exato com nome e posto
+    for (let i = 0; i < selectElement.options.length; i++) {
+        const option = selectElement.options[i];
+        const optionValue = option.value?.trim?.() ?? '';
+        const optionDisplay = option.dataset.display?.trim?.() ?? '';
+        const optionRawName = option.dataset.rawName?.trim?.() ?? '';
+        const optionRank = option.dataset.rank?.trim?.() ?? '';
+
+        // Match exato de nome E posto
+        if (normalizedValue !== '' && normalizedRank !== '' &&
+            optionRawName === normalizedValue && optionRank === normalizedRank) {
+            $(selectElement).val(option.value).trigger('change');
+            console.log('selectOptionByValue: Match exato encontrado (nome + posto)', optionDisplay);
+            return true;
+        }
+    }
+
+    // Se não encontrou match exato, tenta match por nome OU posto
     for (let i = 0; i < selectElement.options.length; i++) {
         const option = selectElement.options[i];
         const optionValue = option.value?.trim?.() ?? '';
@@ -1085,9 +1104,31 @@ function selectOptionByValue(selectReference, value, rank = null) {
 
         if (matchesValue || matchesRank) {
             $(selectElement).val(option.value).trigger('change');
-            return;
+            console.log('selectOptionByValue: Match parcial encontrado', optionDisplay);
+            return true;
         }
     }
+
+    // Se não encontrou, cria uma nova opção dinamicamente
+    if (normalizedValue !== '' || normalizedRank !== '') {
+        const displayText = normalizedRank && normalizedValue
+            ? `${normalizedRank} ${normalizedValue}`
+            : (normalizedRank || normalizedValue);
+
+        const newOption = new Option(displayText, normalizedValue, true, true);
+        newOption.dataset.rank = normalizedRank;
+        newOption.dataset.rawName = normalizedValue;
+        newOption.dataset.display = displayText;
+
+        selectElement.add(newOption);
+        $(selectElement).trigger('change');
+
+        console.log('selectOptionByValue: Opção criada dinamicamente', displayText);
+        return true;
+    }
+
+    console.warn('selectOptionByValue: Nenhum match encontrado para', { value: normalizedValue, rank: normalizedRank });
+    return false;
 }
 </script>
 
