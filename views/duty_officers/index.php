@@ -307,9 +307,26 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
     <script>
         const dutyOfficersApiUrl = <?php echo json_encode($dutyOfficersApiUrl, JSON_UNESCAPED_SLASHES); ?>;
 
+        // Função para limpar seleções dos dropdowns
+        function clearDutyOfficerSelections() {
+            const officerSelect = document.getElementById('officerSelect');
+            const masterSelect = document.getElementById('masterSelect');
+
+            if (officerSelect) {
+                officerSelect.value = '';
+            }
+
+            if (masterSelect) {
+                masterSelect.value = '';
+            }
+        }
+
         // JavaScript para comunicação com a API do Node.js
         document.addEventListener('DOMContentLoaded', function() {
-            // Carregar oficiais de serviço atuais ao iniciar a página (sem pré-selecionar)
+            // Garantir que os dropdowns comecem vazios
+            clearDutyOfficerSelections();
+
+            // Carregar oficiais de serviço atuais ao iniciar a página (sem pré-selecionar nos dropdowns)
             loadCurrentDutyOfficers({ preselect: false });
 
             // Evento para o botão de atualização
@@ -322,21 +339,6 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                 window.location.href = 'index.php';
             });
         });
-
-        function clearDutyOfficerSelections() {
-            const officerSelect = document.getElementById('officerSelect');
-            const masterSelect = document.getElementById('masterSelect');
-
-            if (officerSelect) {
-                officerSelect.value = '';
-                officerSelect.dispatchEvent(new Event('change'));
-            }
-
-            if (masterSelect) {
-                masterSelect.value = '';
-                masterSelect.dispatchEvent(new Event('change'));
-            }
-        }
 
         // Função para carregar os oficiais de serviço atuais
         function loadCurrentDutyOfficers(options = {}) {
