@@ -468,7 +468,6 @@ for ($i = 0; $i < 3; $i++): ?>
           <div class="form-group">
             <label for="edit_status">Status:</label>
             <select class="form-control" id="edit_status" name="status" required>
-              <option value="">Selecione...</option>
               <option value="bordo">A Bordo</option>
               <option value="terra">Em Terra</option>
             </select>
