@@ -309,8 +309,8 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
 
         // JavaScript para comunicação com a API do Node.js
         document.addEventListener('DOMContentLoaded', function() {
-            // Carregar oficiais de serviço atuais ao iniciar a página
-            loadCurrentDutyOfficers();
+            // Carregar oficiais de serviço atuais ao iniciar a página (sem pré-selecionar)
+            loadCurrentDutyOfficers({ preselect: false });
 
             // Evento para o botão de atualização
             document.getElementById('updateButton').addEventListener('click', function() {
