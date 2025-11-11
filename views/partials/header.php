@@ -70,7 +70,23 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
 
 </head>
 
-<body>
+<?php
+$bodyClasses = [];
+
+if ($is_logged_in) {
+    $bodyClasses[] = 'logged-in';
+
+    if ($is_admin) {
+        $bodyClasses[] = 'admin';
+    } elseif ($is_portaria) {
+        $bodyClasses[] = 'portaria';
+    }
+}
+
+$bodyClassAttribute = empty($bodyClasses) ? '' : ' class="' . implode(' ', $bodyClasses) . '"';
+?>
+
+<body<?= $bodyClassAttribute ?>>
 <header id="topo">
     <div class="navbar-left">
         <img src="imagens/brasao2.png" id="papem" alt="Conecta PAPEM" class="navbar-logo">
