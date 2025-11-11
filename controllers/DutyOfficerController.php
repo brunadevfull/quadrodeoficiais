@@ -1,9 +1,7 @@
 <?php
-require_once 'includes/MilitaryFormatter.php';
 
 class DutyOfficerController {
     public function index() {
-        include 'models/Oficial.php';
         require_once 'includes/MilitaryPersonnelRepository.php';
 
         if (session_status() == PHP_SESSION_NONE) {
@@ -42,74 +40,8 @@ class DutyOfficerController {
             $personnelErrors[] = $exception->getMessage();
         }
 
-        $needsOfficerFallback = empty($officerOptions);
-        $needsMasterFallback = empty($masterOptions);
-
-        if ($needsOfficerFallback || $needsMasterFallback) {
-            $oficiais = Oficial::all();
-
-            if ($needsOfficerFallback) {
-                $officerOptions = $this->buildFallbackOptions($oficiais, 'officer');
-            }
-
-            if ($needsMasterFallback) {
-                $masterOptions = $this->buildFallbackOptions($oficiais, 'master');
-            }
-
-            if (empty($personnelErrors)) {
-                $personnelErrors[] = 'Nenhum registro encontrado no banco de militares. Exibindo dados locais.';
-            }
-        }
-
         // Inclui a view e passa as variáveis necessárias
         include 'views/duty_officers/index.php';
-    }
-
-    private function buildFallbackOptions(array $oficiais, string $type): array
-    {
-        $options = [];
-
-        foreach ($oficiais as $oficial) {
-            $postoId = strtoupper((string)($oficial['posto_id'] ?? ''));
-
-            if ($type === 'officer' && strpos($postoId, 'T') === false) {
-                continue;
-            }
-
-            if ($type === 'master' && strpos($postoId, 'SG') === false) {
-                continue;
-            }
-
-            $name = $oficial['nome'] ?? '';
-
-            if (empty($name)) {
-                continue;
-            }
-
-            $rank = $oficial['descricao'] ?? '';
-
-            $formattedName = MilitaryFormatter::formatName((string)$name);
-            $formattedRank = MilitaryFormatter::formatRank((string)$rank);
-            $formattedSpecialty = '';
-
-            $display = MilitaryFormatter::buildDisplayName($formattedRank, $formattedName, $formattedSpecialty);
-
-            if ($display === '') {
-                continue;
-            }
-
-            $options[] = [
-                'value' => $formattedName,
-                'name' => $formattedName,
-                'rank' => MilitaryFormatter::buildRankWithSpecialty($formattedRank, $formattedSpecialty),
-                'short_rank' => $formattedRank,
-                'type' => $type,
-                'specialty' => $formattedSpecialty,
-                'display' => $display,
-            ];
-        }
-
-        return $options;
     }
 
     public function update() {

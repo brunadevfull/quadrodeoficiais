@@ -33,59 +33,14 @@ class OficialController {
             $personnelErrors[] = $exception->getMessage();
         }
 
-        $needsOfficerFallback = empty($officerOptions);
-        $needsMasterFallback = empty($masterOptions);
-
-        if ($needsOfficerFallback || $needsMasterFallback) {
-            if ($needsOfficerFallback) {
-                $officerOptions = $this->buildFallbackOptions($oficiais, 'officer');
-            }
-
-            if ($needsMasterFallback) {
-                $masterOptions = $this->buildFallbackOptions($oficiais, 'master');
-            }
-
+        if (empty($officerOptions) || empty($masterOptions)) {
             if (empty($personnelErrors)) {
-                $personnelErrors[] = 'Nenhum registro encontrado no banco de militares. Exibindo dados locais.';
+                $personnelErrors[] = 'Nenhum registro encontrado no banco de militares.';
             }
         }
 
         // Inclui a view e passa as variáveis necessárias
         include 'views/oficiais/index.php';
-    }
-
-    private function buildFallbackOptions(array $oficiais, string $type): array
-    {
-        $options = [];
-
-        foreach ($oficiais as $oficial) {
-            $postoId = strtoupper((string)($oficial['posto_id'] ?? ''));
-
-            if ($type === 'officer' && strpos($postoId, 'T') === false) {
-                continue;
-            }
-
-            if ($type === 'master' && strpos($postoId, 'SG') === false) {
-                continue;
-            }
-
-            $name = $oficial['nome'] ?? '';
-
-            if (empty($name)) {
-                continue;
-            }
-
-            $rank = $oficial['descricao'] ?? '';
-
-            $options[] = [
-                'value' => $name,
-                'name' => $name,
-                'rank' => $rank,
-                'type' => $type,
-            ];
-        }
-
-        return $options;
     }
 
     public function add() {
