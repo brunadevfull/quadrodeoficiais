@@ -88,7 +88,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
 
 
 <?php if ($is_logged_in): ?>
-
+    <!-- Ações Administrativas - apenas para administradores -->
     <?php if ($is_admin): ?>
         <div class="dropdown">
             <button class="glass-button dropdown-toggle" type="button" id="adminDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -104,22 +104,21 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
         </div>
     <?php endif; ?>
 
-    <!-- REMOVIDO o if ($can_manage_duty_officers) -->
-    <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
-        Gerenciar Oficiais de Serviço
-    </button>
+    <?php if ($can_manage_duty_officers): ?>
+        <!-- Botão Gerenciar Oficiais de Serviço - apenas para administradores e usuário EOR -->
+        
+        <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
+            Gerenciar Oficiais de Serviço
+        </button>
+        
+    <?php endif; ?>
 
     <!-- Botão de Logout -->
-    <button class="glass-button logout-button" onclick="window.location.href='views/logout.php'">
-        Logout
-    </button>
-
+    <button class="glass-button logout-button" onclick="window.location.href='views/logout.php'">Logout</button>
 <?php else: ?>
-
     <button class="btn btn-primary login-button" data-toggle="modal" data-target="#loginModal">Login</button>
-
 <?php endif; ?>
-
+</div>
 
 
 <!-- R�dio Marinha -->
