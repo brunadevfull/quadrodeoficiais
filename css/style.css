@@ -1558,15 +1558,17 @@ body.logged-in:not(.portaria) .table th.text-center {
   padding: 5px 2px;
 }
 
-/* Botão de logout - inicialmente invisível */
-.logout-button {
+/* Botões ocultos no topo - inicialmente invisíveis */
+.logout-button,
+.duty-manage-button {
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 /* Quando o mouse está sobre o topo, mostrar o botão */
-#topo:hover .logout-button {
+#topo:hover .logout-button,
+#topo:hover .duty-manage-button {
   opacity: 1;
   visibility: visible;
 }
@@ -1583,7 +1585,8 @@ body.logged-in:not(.portaria) .table th.text-center {
 }
 
 /* Ajustar a transição para ficar mais suave */
-.glass-button.logout-button {
+.glass-button.logout-button,
+.glass-button.duty-manage-button {
   transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.3s ease;
 }
 /* ========================================
