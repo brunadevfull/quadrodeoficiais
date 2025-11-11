@@ -107,7 +107,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
     <?php if ($can_manage_duty_officers): ?>
         <!-- Botão Gerenciar Oficiais de Serviço - apenas para administradores e usuário EOR -->
         
-        <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
+        <button class="glass-button duty-manage-button" data-toggle="modal" data-target="#dutyOfficersModal">
             Gerenciar Oficiais de Serviço
         </button>
         
