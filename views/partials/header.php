@@ -10,7 +10,7 @@ $is_logged_in = isset($_SESSION['user_id']);
 $is_admin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 $is_portaria = isset($_SESSION['user_id']) && !$is_admin;
 $username = strtolower($_SESSION['username'] ?? '');
-$can_manage_duty_officers = $is_logged_in && ($is_admin || $username === 'eor');
+$can_manage_duty_officers = $is_logged_in;
 
 
 
@@ -88,7 +88,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
 
 
 <?php if ($is_logged_in): ?>
-    <!-- Ações Administrativas - apenas para administradores -->
+
     <?php if ($is_admin): ?>
         <div class="dropdown">
             <button class="glass-button dropdown-toggle" type="button" id="adminDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -104,22 +104,22 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
         </div>
     <?php endif; ?>
 
-    <?php if ($can_manage_duty_officers): ?>
-        <!-- Botão Gerenciar Oficiais de Serviço - apenas para administradores e usuário EOR -->
-        <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
-            Gerenciar Oficiais de Serviço
-        </button>
-        <button class="aurora-button" data-toggle="modal" data-target="#dutyOfficersModalAurora">
-            Gerenciar Oficiais de Serviço (Novo Visual)
-        </button>
-    <?php endif; ?>
+    <!-- REMOVIDO o if ($can_manage_duty_officers) -->
+    <button class="glass-button" data-toggle="modal" data-target="#dutyOfficersModal">
+        Gerenciar Oficiais de Serviço
+    </button>
 
     <!-- Botão de Logout -->
-    <button class="glass-button logout-button" onclick="window.location.href='views/logout.php'">Logout</button>
+    <button class="glass-button logout-button" onclick="window.location.href='views/logout.php'">
+        Logout
+    </button>
+
 <?php else: ?>
+
     <button class="btn btn-primary login-button" data-toggle="modal" data-target="#loginModal">Login</button>
+
 <?php endif; ?>
-</div>
+
 
 
 <!-- R�dio Marinha -->
@@ -166,9 +166,9 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                     <h6>Oficiais de Serviço Atuais</h6>
                     <div id="loadingCurrentOfficers">
                         <div class="spinner-border spinner-border-sm text-primary" role="status">
-                            <span class="sr-only">Carregando...</span>
+                         
                         </div>
-                        <span class="ml-2">Carregando...</span>
+
                     </div>
                     <div id="officersDisplay" class="d-none">
                         <div class="row">
@@ -181,9 +181,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                         </div>
                         <p class="text-muted small">Última atualização: <span id="lastUpdated">-</span></p>
                     </div>
-                    <div id="errorLoadingOfficers" class="alert alert-danger d-none">
-                        <span id="errorLoadingOfficersMessage">Erro ao carregar os oficiais de serviço atuais.</span>
-                    </div>
+                   
                 </div>
 
                 <form id="dutyOfficersForm">
@@ -278,7 +276,7 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
                         <i class="fas fa-info-circle"></i> Os oficiais de serviço definidos serão exibidos na barra superior do sistema PAPEM. A atualização é imediata.
                     </div>
 
-                    <div id="formError" class="alert alert-danger d-none"></div>
+
                 </form>
             </div>
             <div class="modal-footer">
@@ -296,7 +294,6 @@ $dutyOfficersApiUrl = ($scriptDirectory === '' ? '' : $scriptDirectory) . '/prox
         <div class="modal-content neo-duty-modal">
             <div class="neo-modal-hero">
                 <div>
-                    <h5 class="neo-modal-title" id="dutyOfficersModalAuroraLabel">Painel Dinâmico de Oficiais</h5>
                     <p class="neo-modal-subtitle">Atualize os responsáveis pelo serviço com uma experiência moderna.</p>
                 </div>
                 <button type="button" class="neo-close-button" data-dismiss="modal" aria-label="Fechar">
