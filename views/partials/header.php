@@ -765,6 +765,7 @@ $(document).ready(function() {
 
     activeDutyModalConfigs.forEach(config => {
         $(config.modalSelector).on('shown.bs.modal', function() {
+            clearDutyOfficerSelections(config);
             loadCurrentDutyOfficers(config, { preselect: false });
         });
 
